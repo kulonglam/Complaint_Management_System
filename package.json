@@ -5,6 +5,10 @@
   "scripts": {
     "seed": "node scripts/seed.mjs",
     "supabase:setup": "node scripts/setup-supabase.mjs",
+    "supabase:migrate": "node scripts/apply-migrations.mjs",
+    "supabase:production": "node scripts/setup-production.mjs",
+    "test:isolation": "node scripts/test-isolation.mjs",
+    "test": "npm --prefix frontend test && npm run test:isolation",
     "dev:frontend": "npm --prefix frontend run dev",
     "dev:backend": "node scripts/dev-backend.mjs"
   },

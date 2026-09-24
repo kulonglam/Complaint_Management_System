@@ -19,6 +19,12 @@ export function getErrorMessage(error, fallback = 'Something went wrong. Please 
   if (/row-level security|permission denied|jwt/i.test(message)) {
     return 'You do not have permission to complete this action.';
   }
+  if (/more than one relationship|PGRST201/i.test(message)) {
+    return 'Unable to load related records. Please try again.';
+  }
+  if (/reached its (user|complaint) limit/i.test(message)) {
+    return message;
+  }
   return message;
 }
 

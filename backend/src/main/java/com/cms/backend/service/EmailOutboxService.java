@@ -43,12 +43,15 @@ public class EmailOutboxService {
             for (JsonNode row : rows) {
                 UUID id = UUID.fromString(row.path("id").asText());
                 try {
-                    emailService.send(
+                    boolean delivered = emailService.deliver(
                             row.path("template").asText(),
                             row.path("to_email").asText(),
                             toMap(row.path("payload"))
                     );
-                    supabaseAdminClient.markEmail(id, "SENT", null);
+                    supabaseAdminClient.markEmail(id, delivered ? "SENT" : "PENDING", delivered ? null : "Waiting for SMTP or RESEND_API_KEY");
+                    if (!delivered) {
+                        return;
+                    }
                 } catch (Exception ex) {
                     supabaseAdminClient.markEmail(id, "FAILED", ex.getMessage());
                     log.warn("email outbox failed id={}: {}", id, ex.getMessage());

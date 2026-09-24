@@ -12,6 +12,8 @@ public record AppProperties(
         @DefaultValue("false") boolean mailEnabled,
         @DefaultValue("noreply@localhost") String mailFrom,
         @DefaultValue("60") int rateLimitCapacity,
-        @DefaultValue("60") int rateLimitWindowSeconds
+        @DefaultValue("60") int rateLimitWindowSeconds,
+        @DefaultValue("") String resendApiKey,
+        @DefaultValue("") String stripeSecretKey
 ) {
 }

@@ -24,12 +24,16 @@ RPC:
 - `complaint_timeline`
 - `add_complaint_comment`
 - `submit_resolution`
+- `organization_usage`
+- `assert_plan_capacity`
+- `assert_named_rate_limit`
 
 Spring Boot (`backend/`):
 
 - `GET /health`
+- `GET /ready` (503 if Supabase is not configured)
 - `POST /api/users/invite` (Bearer token, `users:create`)
 - `POST /api/users/reset-access` (Bearer token, `users:update`)
 - `POST /api/jobs/sla` (`x-job-key`)
 
-`/api/**` is rate limited. Email is sent from `email_outbox` when `MAIL_ENABLED=true`.
+`/api/**` is rate limited in the database when Supabase is configured, otherwise in memory. Email is stored in `email_outbox` and delivered when `MAIL_ENABLED=true` or `RESEND_API_KEY` is set.

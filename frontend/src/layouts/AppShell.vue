@@ -121,9 +121,10 @@ const nav = computed(() => {
         { to: '/roles', label: 'Roles & permissions', icon: Shield, show: can('roles:view') },
         { to: '/audit-logs', label: 'Audit logs', icon: Shield, show: can('audit_logs:view') },
         { to: '/settings', label: 'Settings', icon: Settings, show: can('settings:view') },
+        { to: '/billing', label: 'Billing', icon: FileBarChart, show: can('settings:view') || auth.isPlatformAdmin.value },
+        { to: '/email-log', label: 'Email log', icon: Settings, show: can('settings:view') || auth.isPlatformAdmin.value },
         { to: '/system-settings', label: 'System settings', icon: SlidersHorizontal, show: auth.isPlatformAdmin.value },
         { to: '/organizations', label: 'Organizations', icon: Building2, show: auth.isPlatformAdmin.value },
-        { to: '/billing', label: 'Billing', icon: FileBarChart, show: auth.isPlatformAdmin.value },
       ],
     },
   ];

@@ -211,6 +211,49 @@ public class SupabaseAdminClient {
                 .toBodilessEntity());
     }
 
+    public void enqueueEmail(UUID organizationId, String to, String template, Map<String, Object> payload) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("organization_id", organizationId == null ? null : organizationId.toString());
+        body.put("to_email", to);
+        body.put("template", template);
+        body.put("payload", payload == null ? Map.of() : payload);
+        body.put("status", "PENDING");
+        call(() -> restClient.post()
+                .uri("/rest/v1/email_outbox")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve()
+                .toBodilessEntity());
+    }
+
+    public void assertNamedRateLimit(String bucket, String actor, int limit) {
+        call(() -> restClient.post()
+                .uri("/rest/v1/rpc/assert_named_rate_limit")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of(
+                        "p_bucket", bucket,
+                        "p_actor", actor,
+                        "p_limit", limit
+                ))
+                .retrieve()
+                .toBodilessEntity());
+    }
+
+    public void assertPlanCapacity(UUID organizationId, String kind) {
+        if (organizationId == null) {
+            return;
+        }
+        call(() -> restClient.post()
+                .uri("/rest/v1/rpc/assert_plan_capacity")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of(
+                        "p_org", organizationId.toString(),
+                        "p_kind", kind
+                ))
+                .retrieve()
+                .toBodilessEntity());
+    }
+
     public int processSlaJobs() {
         JsonNode result = call(() -> restClient.post()
                 .uri("/rest/v1/rpc/process_sla_jobs")

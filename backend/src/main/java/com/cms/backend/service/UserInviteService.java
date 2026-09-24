@@ -42,6 +42,7 @@ public class UserInviteService {
         }
 
         UUID organizationId = actor.organizationId();
+        supabaseAdminClient.assertPlanCapacity(organizationId, "profiles");
         String password = request.password() == null || request.password().isBlank()
                 ? temporaryPassword()
                 : request.password();
@@ -70,7 +71,7 @@ public class UserInviteService {
         emailService.send("user-invited", request.email(), Map.of(
                 "first_name", request.firstName(),
                 "organization", organizationId == null ? "" : organizationId.toString()
-        ));
+        ), organizationId);
 
         return new InviteUserResponse(userId, request.email());
     }
@@ -96,10 +97,13 @@ public class UserInviteService {
 
         String password = temporaryPassword();
         supabaseAdminClient.updateAuthPassword(request.userId(), password);
+        UUID organizationId = organization == null || organization.isBlank() || "null".equals(organization)
+                ? null
+                : UUID.fromString(organization);
         emailService.send("user-invited", profile.path("email").asText(), Map.of(
                 "first_name", profile.path("first_name").asText(""),
                 "temporary_password", password
-        ));
+        ), organizationId);
         return new ResetAccessResponse(request.userId().toString(), password);
     }
 

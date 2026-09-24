@@ -81,6 +81,10 @@ Public tracking example: reference `CMP-2026-000001`, tracking code `DEMO-AA01`.
 
 `admin@northwind.org` must not see Demo Organization complaints. That isolation is enforced by RLS.
 
+Run `npm run test:isolation` against the live project to confirm it.
+
+See `docs/PRODUCTION.md` before calling the deployment production-ready. CI lives in `.github/workflows/ci.yml`.
+
 ## Security model
 
 - RLS on every tenant table

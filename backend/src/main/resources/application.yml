@@ -58,6 +58,8 @@ app:
   mail-from: ${MAIL_FROM:noreply@localhost}
   rate-limit-capacity: ${RATE_LIMIT_CAPACITY:60}
   rate-limit-window-seconds: ${RATE_LIMIT_WINDOW_SECONDS:60}
+  resend-api-key: ${RESEND_API_KEY:}
+  stripe-secret-key: ${STRIPE_SECRET_KEY:}
 
 logging:
   level:

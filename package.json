@@ -4,8 +4,9 @@
   "type": "module",
   "scripts": {
     "seed": "node scripts/seed.mjs",
+    "supabase:setup": "node scripts/setup-supabase.mjs",
     "dev:frontend": "npm --prefix frontend run dev",
-    "dev:backend": "backend/mvnw.cmd -f backend/pom.xml spring-boot:run"
+    "dev:backend": "node scripts/dev-backend.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

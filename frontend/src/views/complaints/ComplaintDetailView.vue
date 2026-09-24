@@ -44,13 +44,7 @@
 
     <div class="rounded-2xl border border-slate-200 bg-white p-4">
       <div v-if="tab === 'Overview'" class="text-sm text-slate-600">Use the tabs to review timeline, investigation, comments, files, resolution, and audit history.</div>
-      <ol v-else-if="tab === 'Timeline'" class="space-y-4">
-        <li v-for="event in orderedHistory" :key="event.id" class="border-l-2 border-slate-200 pl-4">
-          <p class="font-medium">{{ STATUS_LABELS[event.new_status] || event.new_status }}</p>
-          <p class="text-sm text-slate-500">{{ formatDate(event.created_at) }}</p>
-          <p v-if="event.reason" class="text-sm">{{ event.reason }}</p>
-        </li>
-      </ol>
+      <ComplaintTimeline v-else-if="tab === 'Timeline'" :events="timelineEvents" />
       <div v-else-if="tab === 'Investigation'" class="space-y-3 text-sm">
         <article v-for="item in complaint.investigations || []" :key="item.id" class="rounded-xl border p-3">
           <p class="font-medium">{{ item.status }} · {{ displayName(item.investigator) }}</p>
@@ -72,15 +66,30 @@
         </ul>
       </div>
       <div v-else-if="tab === 'Attachments'">
-        <input class="mb-4 text-sm" type="file" @change="uploadFile" />
+        <div class="mb-4 flex flex-wrap items-center gap-3 text-sm">
+          <input type="file" @change="uploadFile" />
+          <label class="flex items-center gap-2">
+            <input v-model="publicFile" type="checkbox" /> Visible on public tracking
+          </label>
+        </div>
         <ul class="space-y-2 text-sm">
-          <li v-for="file in complaint.attachments || []" :key="file.id">{{ file.file_name }} ({{ file.visibility }})</li>
+          <li v-for="file in complaint.attachments || []" :key="file.id" class="flex items-center justify-between rounded-lg border px-3 py-2">
+            <button class="text-left text-blue-700" type="button" @click="openFile(file)">{{ file.file_name }} ({{ file.visibility }})</button>
+            <div class="flex gap-2">
+              <button class="text-xs" type="button" @click="toggleVisibility(file)">{{ file.visibility === 'PUBLIC' ? 'Make internal' : 'Make public' }}</button>
+              <button class="text-xs text-red-600" type="button" @click="removeFile(file)">Delete</button>
+            </div>
+          </li>
         </ul>
       </div>
-      <div v-else-if="tab === 'Resolution'" class="text-sm">
+      <div v-else-if="tab === 'Resolution'" class="text-sm space-y-3">
         <article v-for="item in complaint.resolutions || []" :key="item.id" class="rounded-xl border p-3">
           <p class="font-medium">{{ item.approval_status }}</p>
           <p class="mt-2">{{ item.summary }}</p>
+          <div v-if="auth.can('complaints:approve_resolution') && item.approval_status === 'SUBMITTED'" class="mt-3 flex gap-2">
+            <AppButton @click="review(item.id, 'APPROVED')">Approve</AppButton>
+            <AppButton variant="secondary" @click="review(item.id, 'REJECTED')">Reject</AppButton>
+          </div>
         </article>
         <EmptyState v-if="!(complaint.resolutions || []).length" title="No resolution yet" />
       </div>
@@ -102,13 +111,33 @@
           required
           :options="staffOptions"
         />
+        <FormField
+          v-model="assignForm.departmentId"
+          label="Department"
+          type="select"
+          :options="departmentOptions"
+        />
+        <FormField v-model="assignForm.dueDate" label="Deadline" type="datetime-local" />
         <FormField v-model="assignForm.notes" label="Notes" type="textarea" />
         <AppButton type="submit" :loading="assigning">Assign</AppButton>
       </form>
     </Modal>
     <Modal :open="escalateOpen" title="Escalate complaint" @close="escalateOpen = false">
       <form class="grid gap-3" @submit.prevent="doEscalate">
-        <FormField v-model="escalateReason" label="Reason" type="textarea" required />
+        <FormField v-model="escalateForm.reason" label="Reason" type="textarea" required />
+        <FormField
+          v-model="escalateForm.departmentId"
+          label="New department"
+          type="select"
+          :options="departmentOptions"
+        />
+        <FormField
+          v-model="escalateForm.assignee"
+          label="New assignee"
+          type="select"
+          :options="staffOptions"
+        />
+        <FormField v-model="escalateForm.notes" label="Notes" type="textarea" />
         <AppButton type="submit">Escalate</AppButton>
       </form>
     </Modal>
@@ -139,7 +168,17 @@ import PriorityBadge from '@/components/common/PriorityBadge.vue';
 import Modal from '@/components/common/Modal.vue';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog.vue';
 import FormField from '@/components/forms/FormField.vue';
-import { fetchComplaint, assignComplaint, escalateComplaint, transitionStatus } from '@/services/complaint.service';
+import ComplaintTimeline from '@/components/complaints/ComplaintTimeline.vue';
+import {
+  fetchComplaint,
+  fetchComplaintTimeline,
+  assignComplaint,
+  escalateComplaint,
+  transitionStatus,
+  attachmentUrl,
+  reviewResolution,
+  addComplaintComment,
+} from '@/services/complaint.service';
 import { ALLOWED_FILE_TYPES, ALLOWED_TRANSITIONS, MAX_FILE_SIZE, STATUS_LABELS } from '@/lib/constants';
 import { displayName, formatDate, getErrorMessage, remainingTime } from '@/lib/utils';
 import { useAuth } from '@/composables/useAuth';
@@ -157,11 +196,12 @@ const commentPublic = ref(false);
 const savingComment = ref(false);
 const assignOpen = ref(false);
 const escalateOpen = ref(false);
-const escalateReason = ref('');
 const assigning = ref(false);
 const pendingStatus = ref('');
 const statusLoading = ref(false);
-const assignForm = reactive({ assignee: '', notes: '' });
+const assignForm = reactive({ assignee: '', departmentId: '', dueDate: '', notes: '' });
+const escalateForm = reactive({ reason: '', departmentId: '', assignee: '', notes: '' });
+const publicFile = ref(false);
 
 const { data: complaint, isLoading, isError, error } = useQuery({
   queryKey: computed(() => ['complaint', route.params.id]),
@@ -179,19 +219,46 @@ const { data: staff } = useQuery({
     return data;
   },
 });
+const { data: departments } = useQuery({
+  queryKey: ['departments'],
+  queryFn: async () => {
+    const { data, error: deptError } = await supabase.from('departments').select('id, name').eq('status', 'ACTIVE');
+    if (deptError) throw deptError;
+    return data;
+  },
+});
+const { data: timeline } = useQuery({
+  queryKey: computed(() => ['complaint-timeline', route.params.id]),
+  queryFn: () => fetchComplaintTimeline(route.params.id),
+});
+
 const staffOptions = computed(() =>
   (staff.value || []).map((user) => ({
     value: user.id,
     label: displayName(user),
   }))
 );
+const departmentOptions = computed(() =>
+  (departments.value || []).map((item) => ({ value: item.id, label: item.name }))
+);
 
 const remaining = computed(() => remainingTime(complaint.value?.due_date));
 const nextStatuses = computed(() => ALLOWED_TRANSITIONS[complaint.value?.status] || []);
-const orderedHistory = computed(() => [...(complaint.value?.history || [])].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)));
+const timelineEvents = computed(() => {
+  if (timeline.value?.length) return timeline.value;
+  return [...(complaint.value?.history || [])]
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+    .map((event) => ({
+      event: event.new_status,
+      label: STATUS_LABELS[event.new_status] || event.new_status,
+      at: event.created_at,
+      description: event.reason,
+    }));
+});
 
 function reload() {
   queryClient.invalidateQueries({ queryKey: ['complaint', route.params.id] });
+  queryClient.invalidateQueries({ queryKey: ['complaint-timeline', route.params.id] });
 }
 
 function askStatus(status) {
@@ -218,8 +285,8 @@ async function doAssign() {
     await assignComplaint({
       p_complaint_id: complaint.value.id,
       p_assignee_id: assignForm.assignee,
-      p_department_id: complaint.value.department_id,
-      p_due_date: complaint.value.due_date,
+      p_department_id: assignForm.departmentId || complaint.value.department_id,
+      p_due_date: assignForm.dueDate ? new Date(assignForm.dueDate).toISOString() : complaint.value.due_date,
       p_notes: assignForm.notes,
     });
     assignOpen.value = false;
@@ -236,7 +303,10 @@ async function doEscalate() {
   try {
     await escalateComplaint({
       p_complaint_id: complaint.value.id,
-      p_reason: escalateReason.value,
+      p_reason: escalateForm.reason,
+      p_new_department_id: escalateForm.departmentId || null,
+      p_new_assignee_id: escalateForm.assignee || null,
+      p_notes: escalateForm.notes || null,
     });
     escalateOpen.value = false;
     toast.success('Complaint escalated');
@@ -249,14 +319,11 @@ async function doEscalate() {
 async function addComment() {
   savingComment.value = true;
   try {
-    const { error: insertError } = await supabase.from('complaint_comments').insert({
-      complaint_id: complaint.value.id,
-      organization_id: auth.state.profile.organization_id,
-      author_id: auth.state.profile.id,
-      content: comment.value,
-      visibility: commentPublic.value ? 'COMPLAINANT_VISIBLE' : 'INTERNAL',
-    });
-    if (insertError) throw insertError;
+    await addComplaintComment(
+      complaint.value.id,
+      comment.value,
+      commentPublic.value ? 'COMPLAINANT_VISIBLE' : 'INTERNAL'
+    );
     comment.value = '';
     toast.success('Comment added');
     reload();
@@ -292,9 +359,38 @@ async function uploadFile(event) {
     file_path: path,
     file_type: file.type,
     file_size: file.size,
-    visibility: 'INTERNAL',
+    visibility: publicFile.value ? 'PUBLIC' : 'INTERNAL',
   });
   toast.success('File uploaded');
   reload();
+}
+
+async function openFile(file) {
+  const url = await attachmentUrl(file.file_path);
+  window.open(url, '_blank');
+}
+
+async function toggleVisibility(file) {
+  const visibility = file.visibility === 'PUBLIC' ? 'INTERNAL' : 'PUBLIC';
+  const { error: updateError } = await supabase.from('complaint_attachments').update({ visibility }).eq('id', file.id);
+  if (updateError) return toast.error(getErrorMessage(updateError));
+  reload();
+}
+
+async function removeFile(file) {
+  await supabase.storage.from('complaint-attachments').remove([file.file_path]).catch(() => {});
+  const { error: deleteError } = await supabase.from('complaint_attachments').delete().eq('id', file.id);
+  if (deleteError) return toast.error(getErrorMessage(deleteError));
+  reload();
+}
+
+async function review(id, status) {
+  try {
+    await reviewResolution(id, status);
+    toast.success(status === 'APPROVED' ? 'Resolution approved' : 'Resolution rejected');
+    reload();
+  } catch (err) {
+    toast.error(getErrorMessage(err, 'Unable to review this resolution.'));
+  }
 }
 </script>

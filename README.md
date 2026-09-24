@@ -15,6 +15,16 @@ Public complaint submit/track runs through `SECURITY DEFINER` database functions
 
 ## Setup
 
+Fastest path for a live hosted project:
+
+1. Create a personal access token at https://supabase.com/dashboard/account/tokens
+2. Put `SUPABASE_ACCESS_TOKEN=sbp_...` in a root `.env`
+3. Run `npm run supabase:setup`
+
+That creates or reuses the project, applies migrations `00001`–`00006`, creates storage buckets, writes env files, and seeds demo data.
+
+Manual path:
+
 1. Create a Supabase project.
 2. Run every SQL file in `supabase/migrations/` in order in the SQL editor (or `supabase db push` if you use the CLI).
 3. Copy environment files:

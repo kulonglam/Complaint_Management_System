@@ -1,6 +1,7 @@
 package com.cms.backend.security;
 
-import com.cms.backend.service.SupabaseAdminClient;
+import com.cms.backend.client.SupabaseAdminClient;
+import com.cms.backend.exception.ApiException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -29,7 +30,8 @@ public class SupabaseAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !request.getRequestURI().startsWith("/api/users");
+        String path = request.getRequestURI();
+        return !path.startsWith("/api/") || path.startsWith("/api/jobs");
     }
 
     @Override
@@ -40,12 +42,12 @@ public class SupabaseAuthFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
         String header = request.getHeader("Authorization");
         if (header == null || !header.startsWith("Bearer ")) {
-            unauthorized(response, "Authentication required");
+            write(response, HttpServletResponse.SC_UNAUTHORIZED, "Authentication required");
             return;
         }
 
         try {
-            AuthenticatedUser user = supabaseAdminClient.authenticate(header.substring(7));
+            AuthenticatedUser user = supabaseAdminClient.authenticate(header.substring(7).trim());
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     user,
                     null,
@@ -53,13 +55,15 @@ public class SupabaseAuthFilter extends OncePerRequestFilter {
             );
             SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(request, response);
+        } catch (ApiException ex) {
+            write(response, ex.getStatus().value(), ex.getMessage());
         } catch (Exception ex) {
-            unauthorized(response, "Invalid session");
+            write(response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid session");
         }
     }
 
-    private void unauthorized(HttpServletResponse response, String message) throws IOException {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    private void write(HttpServletResponse response, int status, String message) throws IOException {
+        response.setStatus(status);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         objectMapper.writeValue(response.getWriter(), Map.of("message", message));
     }

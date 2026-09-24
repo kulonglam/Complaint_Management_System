@@ -5,7 +5,16 @@
     </PageHeader>
     <div class="grid gap-4 md:grid-cols-2">
       <article v-for="item in items || []" :key="item.id" class="rounded-2xl border bg-white p-4">
-        <h3 class="font-semibold">{{ item.name }}</h3>
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h3 class="font-semibold">{{ item.name }}</h3>
+            <p class="text-xs text-slate-500">{{ item.status }}</p>
+          </div>
+          <div class="flex gap-2">
+            <AppButton v-if="auth.can('categories:update')" variant="secondary" @click="toggle(item)">{{ item.status === 'ACTIVE' ? 'Disable' : 'Enable' }}</AppButton>
+            <AppButton v-if="auth.can('categories:create')" variant="secondary" @click="addSub(item)">Add subcategory</AppButton>
+          </div>
+        </div>
         <ul class="mt-2 list-disc pl-5 text-sm text-slate-600">
           <li v-for="sub in item.complaint_subcategories" :key="sub.id">{{ sub.name }}</li>
         </ul>
@@ -14,6 +23,12 @@
     <Modal :open="open" title="New category" @close="open = false">
       <form class="grid gap-3" @submit.prevent="create">
         <FormField v-model="name" label="Name" required />
+        <AppButton type="submit">Save</AppButton>
+      </form>
+    </Modal>
+    <Modal :open="Boolean(subParent)" title="New subcategory" @close="subParent = null">
+      <form class="grid gap-3" @submit.prevent="createSub">
+        <FormField v-model="subName" label="Name" required />
         <AppButton type="submit">Save</AppButton>
       </form>
     </Modal>
@@ -37,6 +52,8 @@ const toast = useToast();
 const queryClient = useQueryClient();
 const open = ref(false);
 const name = ref('');
+const subParent = ref(null);
+const subName = ref('');
 const { data: items } = useQuery({
   queryKey: ['categories'],
   queryFn: async () => {
@@ -45,6 +62,11 @@ const { data: items } = useQuery({
     return data;
   },
 });
+
+function reload() {
+  queryClient.invalidateQueries({ queryKey: ['categories'] });
+}
+
 async function create() {
   const { error } = await supabase.from('complaint_categories').insert({
     organization_id: auth.state.profile.organization_id,
@@ -52,6 +74,31 @@ async function create() {
   });
   if (error) return toast.error(getErrorMessage(error));
   open.value = false;
-  queryClient.invalidateQueries({ queryKey: ['categories'] });
+  name.value = '';
+  reload();
+}
+
+function addSub(item) {
+  subParent.value = item;
+  subName.value = '';
+}
+
+async function createSub() {
+  const { error } = await supabase.from('complaint_subcategories').insert({
+    organization_id: auth.state.profile.organization_id,
+    category_id: subParent.value.id,
+    name: subName.value,
+  });
+  if (error) return toast.error(getErrorMessage(error));
+  subParent.value = null;
+  reload();
+}
+
+async function toggle(item) {
+  const { error } = await supabase.from('complaint_categories').update({
+    status: item.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE',
+  }).eq('id', item.id);
+  if (error) return toast.error(getErrorMessage(error));
+  reload();
 }
 </script>

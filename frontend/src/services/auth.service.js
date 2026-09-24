@@ -6,11 +6,15 @@ export async function fetchSessionContext() {
   } = await supabase.auth.getSession();
   if (!session?.user) return { session: null, profile: null, permissions: [], roles: [], organization: null };
 
-  await supabase.rpc('mark_login');
+  const alreadyMarked = sessionStorage.getItem('cms-login-audited');
+  if (!alreadyMarked) {
+    await supabase.rpc('mark_login');
+    sessionStorage.setItem('cms-login-audited', '1');
+  }
 
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('*, organization:organizations(*), department:departments(id, name)')
+    .select('*, organization:organizations(*), department:departments!profiles_department_id_fkey(id, name)')
     .eq('id', session.user.id)
     .maybeSingle();
   if (error) throw error;

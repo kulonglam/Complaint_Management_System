@@ -5,19 +5,29 @@
       <FormField v-model="summary" label="Resolution summary" type="textarea" required />
       <FormField v-model="corrective" label="Corrective action" type="textarea" />
       <FormField v-model="notes" label="Notes" type="textarea" />
-      <FormField v-model="approval" label="Approval status" type="select" :options="approvalOptions" />
-      <AppButton type="submit" :loading="loading">Save resolution</AppButton>
+      <p class="text-sm text-slate-500">Saving submits the resolution for review. Approval is a separate action.</p>
+      <AppButton type="submit" :loading="loading">Submit for review</AppButton>
     </form>
+
+    <div v-if="current" class="max-w-3xl space-y-3 rounded-2xl border bg-white p-6 text-sm">
+      <p><strong>Current status:</strong> {{ current.approval_status }}</p>
+      <p>{{ current.summary }}</p>
+      <div v-if="auth.can('complaints:approve_resolution') && current.approval_status === 'SUBMITTED'" class="flex gap-2">
+        <AppButton @click="review('APPROVED')">Approve</AppButton>
+        <AppButton variant="secondary" @click="review('REJECTED')">Reject</AppButton>
+      </div>
+    </div>
   </section>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import PageHeader from '@/components/common/PageHeader.vue';
 import FormField from '@/components/forms/FormField.vue';
 import AppButton from '@/components/common/AppButton.vue';
 import { supabase } from '@/lib/supabase';
+import { reviewResolution, submitResolution } from '@/services/complaint.service';
 import { useAuth } from '@/composables/useAuth';
 import { useToast } from '@/composables/useToast';
 import { getErrorMessage } from '@/lib/utils';
@@ -29,48 +39,48 @@ const toast = useToast();
 const summary = ref('');
 const corrective = ref('');
 const notes = ref('');
-const approval = ref('SUBMITTED');
 const loading = ref(false);
-const approvalOptions = [
-  { value: 'DRAFT', label: 'Draft' },
-  { value: 'SUBMITTED', label: 'Submitted' },
-  { value: 'APPROVED', label: 'Approved' },
-  { value: 'REJECTED', label: 'Rejected' },
-];
+const current = ref(null);
+
+onMounted(async () => {
+  const { data } = await supabase
+    .from('complaint_resolutions')
+    .select('*')
+    .eq('complaint_id', route.params.id)
+    .order('created_at', { ascending: false })
+    .limit(1);
+  current.value = data?.[0] || null;
+  if (!current.value) return;
+  summary.value = current.value.summary || '';
+  corrective.value = current.value.corrective_action || '';
+  notes.value = current.value.notes || '';
+});
 
 async function save() {
-  if (approval.value === 'APPROVED' && !auth.can('complaints:approve_resolution')) {
-    toast.error('You do not have permission to approve a resolution.');
-    return;
-  }
   loading.value = true;
   try {
-    const { error } = await supabase.from('complaint_resolutions').insert({
-      complaint_id: route.params.id,
-      organization_id: auth.state.profile.organization_id,
-      summary: summary.value,
-      corrective_action: corrective.value,
-      notes: notes.value,
-      resolved_by: auth.state.profile.id,
-      resolution_date: new Date().toISOString().slice(0, 10),
-      approval_status: approval.value,
-      reviewed_by: approval.value === 'APPROVED' ? auth.state.profile.id : null,
-      reviewed_at: approval.value === 'APPROVED' ? new Date().toISOString() : null,
+    current.value = await submitResolution({
+      p_complaint_id: route.params.id,
+      p_summary: summary.value,
+      p_corrective_action: corrective.value || null,
+      p_notes: notes.value || null,
     });
-    if (error) throw error;
-    if (approval.value === 'APPROVED') {
-      await supabase.rpc('transition_complaint_status', {
-        p_complaint_id: route.params.id,
-        p_new_status: 'RESOLVED',
-        p_reason: 'Resolution approved',
-      }).catch(() => {});
-    }
-    toast.success('Resolution saved');
+    toast.success('Resolution submitted for review');
     router.push(`/complaints/${route.params.id}`);
   } catch (err) {
     toast.error(getErrorMessage(err, 'Unable to save the resolution.'));
   } finally {
     loading.value = false;
+  }
+}
+
+async function review(status) {
+  try {
+    await reviewResolution(current.value.id, status);
+    toast.success(status === 'APPROVED' ? 'Resolution approved' : 'Resolution rejected');
+    router.push(`/complaints/${route.params.id}`);
+  } catch (err) {
+    toast.error(getErrorMessage(err, 'Unable to review this resolution.'));
   }
 }
 </script>

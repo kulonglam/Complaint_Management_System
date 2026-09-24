@@ -4,6 +4,8 @@
     <form class="max-w-2xl space-y-4 rounded-2xl border border-slate-200 bg-white p-6" @submit.prevent="onSubmit">
       <FormField v-model="title" label="Title" required />
       <FormField v-model="description" label="Description" type="textarea" required />
+      <FormField v-model="categoryId" label="Category" type="select" :options="categoryOptions" />
+      <FormField v-if="subcategoryOptions.length" v-model="subcategoryId" label="Subcategory" type="select" :options="subcategoryOptions" />
       <FormField v-model="priority" label="Priority" type="select" :options="PRIORITY_OPTIONS" />
       <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
       <AppButton type="submit" :loading="loading">Create</AppButton>
@@ -12,8 +14,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useQuery } from '@tanstack/vue-query';
 import PageHeader from '@/components/common/PageHeader.vue';
 import FormField from '@/components/forms/FormField.vue';
 import AppButton from '@/components/common/AppButton.vue';
@@ -24,11 +27,27 @@ import { getErrorMessage } from '@/lib/utils';
 
 const title = ref('');
 const description = ref('');
+const categoryId = ref('');
+const subcategoryId = ref('');
 const priority = ref('MEDIUM');
 const loading = ref(false);
 const error = ref('');
 const auth = useAuth();
 const router = useRouter();
+
+const { data: categories } = useQuery({
+  queryKey: ['categories'],
+  queryFn: async () => {
+    const { data, error: queryError } = await supabase.from('complaint_categories').select('id, name, complaint_subcategories(id, name)').eq('status', 'ACTIVE');
+    if (queryError) throw queryError;
+    return data;
+  },
+});
+const categoryOptions = computed(() => (categories.value || []).map((item) => ({ value: item.id, label: item.name })));
+const subcategoryOptions = computed(() => {
+  const selected = (categories.value || []).find((item) => item.id === categoryId.value);
+  return (selected?.complaint_subcategories || []).map((item) => ({ value: item.id, label: item.name }));
+});
 
 async function onSubmit() {
   error.value = '';
@@ -43,8 +62,8 @@ async function onSubmit() {
       p_name: `${auth.state.profile.first_name} ${auth.state.profile.last_name}`.trim(),
       p_email: auth.state.profile.email,
       p_phone: auth.state.profile.phone,
-      p_category_id: null,
-      p_subcategory_id: null,
+      p_category_id: categoryId.value || null,
+      p_subcategory_id: subcategoryId.value || null,
       p_incident_date: null,
       p_location: null,
       p_priority: priority.value,

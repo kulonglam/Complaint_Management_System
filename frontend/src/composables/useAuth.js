@@ -22,13 +22,16 @@ export function createAuthState() {
       const context = await fetchSessionContext();
       Object.assign(state, { ...context, loading: false });
     } catch {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       Object.assign(state, {
         loading: false,
-        session: null,
-        profile: null,
-        organization: null,
-        roles: [],
-        permissions: [],
+        session,
+        profile: session ? state.profile : null,
+        organization: session ? state.organization : null,
+        roles: session ? state.roles : [],
+        permissions: session ? state.permissions : [],
       });
     }
     return state;

@@ -7,7 +7,12 @@ COPY src ./src
 RUN ./mvnw -q -DskipTests package
 
 FROM eclipse-temurin:21-jre-alpine
+RUN apk add --no-cache wget \
+    && addgroup -S cms && adduser -S cms -G cms
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/target/complaint-management-backend-1.0.0.jar app.jar
+USER cms
 EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=3s --start-period=25s --retries=3 \
+    CMD wget -qO- http://127.0.0.1:8000/health >/dev/null || exit 1
 ENTRYPOINT ["java", "-jar", "app.jar"]

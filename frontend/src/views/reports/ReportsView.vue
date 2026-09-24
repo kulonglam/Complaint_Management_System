@@ -1,40 +1,99 @@
 <template>
   <section class="space-y-6">
     <PageHeader title="Reports" description="Operational reports calculated from live complaint records.">
+      <select v-model="preset" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+        <option value="30">Last 30 days</option>
+        <option value="month">This month</option>
+        <option value="quarter">This quarter</option>
+        <option value="year">This year</option>
+        <option value="all">All time</option>
+      </select>
       <AppButton v-if="auth.can('reports:export')" variant="secondary" @click="exportCsv">Export CSV</AppButton>
     </PageHeader>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <StatCard label="Total" :value="metrics.total || 0" />
       <StatCard label="Open" :value="metrics.open || 0" />
+      <StatCard label="Resolved" :value="metrics.resolved || 0" />
       <StatCard label="Overdue" :value="metrics.overdue || 0" />
+      <StatCard label="SLA breached" :value="extraSafe.sla_breached || 0" />
+      <StatCard label="Resolved on time" :value="extraSafe.on_time || 0" />
       <StatCard label="Escalated" :value="metrics.escalated || 0" />
+      <StatCard label="Reopened" :value="extraSafe.reopen_count || 0" />
+      <StatCard label="Avg resolution hours" :value="Number(extraSafe.avg_resolution_hours || metrics.avg_resolution_hours || 0).toFixed(1)" />
+      <StatCard label="SLA compliance" :value="`${metrics.sla_compliance || 0}%`" />
     </div>
-    <div class="rounded-2xl border bg-white p-4 text-sm">
-      <h2 class="font-semibold">By status</h2>
-      <ul class="mt-3 space-y-1">
-        <li v-for="(count, status) in metrics.by_status || {}" :key="status">{{ status }}: {{ count }}</li>
-      </ul>
+    <div class="grid gap-4 lg:grid-cols-2">
+      <div class="rounded-2xl border bg-white p-4 text-sm">
+        <h2 class="font-semibold">Complaints by status</h2>
+        <ul class="mt-3 space-y-1">
+          <li v-for="(count, status) in metrics.by_status || {}" :key="status">{{ status }}: {{ count }}</li>
+        </ul>
+      </div>
+      <div class="rounded-2xl border bg-white p-4 text-sm">
+        <h2 class="font-semibold">Complaints by priority</h2>
+        <ul class="mt-3 space-y-1">
+          <li v-for="(count, priority) in metrics.by_priority || {}" :key="priority">{{ priority }}: {{ count }}</li>
+        </ul>
+      </div>
+      <div class="rounded-2xl border bg-white p-4 text-sm">
+        <h2 class="font-semibold">Complaints by category</h2>
+        <ul class="mt-3 space-y-1">
+          <li v-for="row in metrics.by_category || []" :key="row.name">{{ row.name }}: {{ row.count }}</li>
+        </ul>
+      </div>
+      <div class="rounded-2xl border bg-white p-4 text-sm">
+        <h2 class="font-semibold">Complaints by department</h2>
+        <ul class="mt-3 space-y-1">
+          <li v-for="row in metrics.by_department || []" :key="row.name">{{ row.name }}: {{ row.count }}</li>
+        </ul>
+      </div>
+      <div class="rounded-2xl border bg-white p-4 text-sm">
+        <h2 class="font-semibold">Aging (open cases)</h2>
+        <ul class="mt-3 space-y-1">
+          <li v-for="(count, bucket) in extraSafe.aging || {}" :key="bucket">{{ bucket }}: {{ count }}</li>
+        </ul>
+      </div>
+      <div class="rounded-2xl border bg-white p-4 text-sm">
+        <h2 class="font-semibold">Monthly trends</h2>
+        <ul class="mt-3 space-y-1">
+          <li v-for="row in extraSafe.monthly_trends || []" :key="row.month">{{ row.month }}: {{ row.count }}</li>
+        </ul>
+      </div>
+      <div class="rounded-2xl border bg-white p-4 text-sm lg:col-span-2">
+        <h2 class="font-semibold">Officer workload</h2>
+        <ul class="mt-3 space-y-1">
+          <li v-for="row in extraSafe.by_assignee || []" :key="row.name">{{ row.name }}: {{ row.open }} open</li>
+        </ul>
+      </div>
     </div>
   </section>
 </template>
 
 <script setup>
+import { computed, ref } from 'vue';
 import { useQuery } from '@tanstack/vue-query';
 import PageHeader from '@/components/common/PageHeader.vue';
 import AppButton from '@/components/common/AppButton.vue';
 import StatCard from '@/components/dashboard/StatCard.vue';
-import { fetchComplaints, fetchDashboard } from '@/services/complaint.service';
-import { downloadText, toCsv } from '@/lib/utils';
+import { fetchComplaints, fetchDashboard, fetchReports } from '@/services/complaint.service';
+import { dateRangePreset, downloadText, toCsv } from '@/lib/utils';
 import { useAuth } from '@/composables/useAuth';
 
 const auth = useAuth();
+const preset = ref('30');
+const range = computed(() => dateRangePreset(preset.value));
 const { data: metrics } = useQuery({
-  queryKey: ['reports'],
-  queryFn: () => fetchDashboard({}),
+  queryKey: computed(() => ['reports', range.value]),
+  queryFn: () => fetchDashboard(range.value),
 });
+const { data: extra } = useQuery({
+  queryKey: computed(() => ['report-metrics', range.value]),
+  queryFn: () => fetchReports(range.value),
+});
+const extraSafe = computed(() => extra.value || {});
 
 async function exportCsv() {
-  const { items } = await fetchComplaints({ page: 1, pageSize: 500 });
+  const { items } = await fetchComplaints({ page: 1, pageSize: 500, from: range.value.from, to: range.value.to });
   downloadText(
     'complaints.csv',
     toCsv(
@@ -44,7 +103,11 @@ async function exportCsv() {
         status: item.status,
         priority: item.priority,
         department: item.department?.name,
+        category: item.category?.name,
+        assignee: item.assignee ? `${item.assignee.first_name || ''} ${item.assignee.last_name || ''}`.trim() : '',
+        sla_breached: item.sla_breached,
         created: item.created_at,
+        due: item.due_date,
       }))
     )
   );

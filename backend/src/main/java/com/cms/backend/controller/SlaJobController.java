@@ -4,9 +4,11 @@ import com.cms.backend.service.SlaJobService;
 import java.util.Map;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/api/jobs")
 public class SlaJobController {
 
     private final SlaJobService slaJobService;
@@ -15,7 +17,7 @@ public class SlaJobController {
         this.slaJobService = slaJobService;
     }
 
-    @PostMapping("/api/jobs/sla")
+    @PostMapping("/sla")
     public Map<String, Integer> processSla(@RequestHeader(value = "x-job-key", required = false) String jobKey) {
         return slaJobService.process(jobKey);
     }

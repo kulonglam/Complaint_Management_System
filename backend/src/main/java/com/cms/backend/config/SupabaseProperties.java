@@ -1,26 +1,16 @@
 package com.cms.backend.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 @ConfigurationProperties(prefix = "supabase")
-public class SupabaseProperties {
+public record SupabaseProperties(
+        @DefaultValue("") String url,
+        @DefaultValue("") String serviceRoleKey
+) {
 
-    private String url = "";
-    private String serviceRoleKey = "";
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public String getServiceRoleKey() {
-        return serviceRoleKey;
-    }
-
-    public void setServiceRoleKey(String serviceRoleKey) {
-        this.serviceRoleKey = serviceRoleKey;
+    public boolean configured() {
+        return url != null && !url.isBlank() && !url.contains("YOUR_PROJECT")
+                && serviceRoleKey != null && !serviceRoleKey.isBlank();
     }
 }

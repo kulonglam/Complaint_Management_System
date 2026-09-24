@@ -4,7 +4,7 @@
     <form class="max-w-xl space-y-4 rounded-2xl border bg-white p-6" @submit.prevent="save">
       <FormField v-model="firstName" label="First name" />
       <FormField v-model="lastName" label="Last name" />
-      <FormField v-model="phone" label="Phone" />
+      <FormField v-model="phone" label="Phone" :error="phoneError" />
       <FormField v-model="jobTitle" label="Job title" />
       <p class="text-sm text-slate-500">Email and organization membership cannot be changed here.</p>
       <AppButton type="submit">Save profile</AppButton>
@@ -13,14 +13,14 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import PageHeader from '@/components/common/PageHeader.vue';
 import FormField from '@/components/forms/FormField.vue';
 import AppButton from '@/components/common/AppButton.vue';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/composables/useAuth';
 import { useToast } from '@/composables/useToast';
-import { getErrorMessage } from '@/lib/utils';
+import { getErrorMessage, isValidPhone } from '@/lib/utils';
 
 const auth = useAuth();
 const toast = useToast();
@@ -28,6 +28,7 @@ const firstName = ref('');
 const lastName = ref('');
 const phone = ref('');
 const jobTitle = ref('');
+const phoneError = computed(() => (phone.value && !isValidPhone(phone.value) ? 'Enter a valid phone number.' : ''));
 
 watch(
   () => auth.state.profile,
@@ -42,6 +43,7 @@ watch(
 );
 
 async function save() {
+  if (phoneError.value) return toast.error(phoneError.value);
   const { error } = await supabase
     .from('profiles')
     .update({

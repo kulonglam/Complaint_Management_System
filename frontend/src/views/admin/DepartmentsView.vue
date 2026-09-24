@@ -1,26 +1,30 @@
 <template>
   <section class="space-y-6">
     <PageHeader title="Departments">
-      <AppButton v-if="auth.can('departments:create')" @click="open = true">Add department</AppButton>
+      <AppButton v-if="auth.can('departments:create')" @click="openCreate()">Add department</AppButton>
     </PageHeader>
     <div class="overflow-x-auto rounded-2xl border bg-white">
       <table class="min-w-full text-sm">
         <thead class="bg-slate-50 text-left text-xs uppercase text-slate-500">
-          <tr><th class="px-4 py-3">Name</th><th class="px-4 py-3">Code</th><th class="px-4 py-3">Status</th></tr>
+          <tr><th class="px-4 py-3">Name</th><th class="px-4 py-3">Code</th><th class="px-4 py-3">Status</th><th class="px-4 py-3" /></tr>
         </thead>
         <tbody>
           <tr v-for="item in items || []" :key="item.id" class="border-t">
             <td class="px-4 py-3">{{ item.name }}</td>
             <td class="px-4 py-3">{{ item.code || '—' }}</td>
             <td class="px-4 py-3">{{ item.status }}</td>
+            <td class="px-4 py-3">
+              <AppButton v-if="auth.can('departments:update')" variant="secondary" @click="openEdit(item)">Edit</AppButton>
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
-    <Modal :open="open" title="New department" @close="open = false">
-      <form class="grid gap-3" @submit.prevent="create">
+    <Modal :open="open" :title="editing ? 'Edit department' : 'New department'" @close="open = false">
+      <form class="grid gap-3" @submit.prevent="save">
         <FormField v-model="name" label="Name" required />
         <FormField v-model="code" label="Code" />
+        <FormField v-if="editing" v-model="status" label="Status" type="select" :options="statusOptions" />
         <AppButton type="submit">Save</AppButton>
       </form>
     </Modal>
@@ -43,8 +47,14 @@ const auth = useAuth();
 const toast = useToast();
 const queryClient = useQueryClient();
 const open = ref(false);
+const editing = ref(null);
 const name = ref('');
 const code = ref('');
+const status = ref('ACTIVE');
+const statusOptions = [
+  { value: 'ACTIVE', label: 'Active' },
+  { value: 'INACTIVE', label: 'Inactive' },
+];
 const { data: items } = useQuery({
   queryKey: ['departments'],
   queryFn: async () => {
@@ -54,12 +64,32 @@ const { data: items } = useQuery({
   },
 });
 
-async function create() {
-  const { error } = await supabase.from('departments').insert({
+function openCreate() {
+  editing.value = null;
+  name.value = '';
+  code.value = '';
+  status.value = 'ACTIVE';
+  open.value = true;
+}
+
+function openEdit(item) {
+  editing.value = item;
+  name.value = item.name;
+  code.value = item.code || '';
+  status.value = item.status;
+  open.value = true;
+}
+
+async function save() {
+  const payload = {
     organization_id: auth.state.profile.organization_id,
     name: name.value,
     code: code.value || null,
-  });
+    status: status.value,
+  };
+  const { error } = editing.value
+    ? await supabase.from('departments').update(payload).eq('id', editing.value.id)
+    : await supabase.from('departments').insert(payload);
   if (error) {
     toast.error(getErrorMessage(error));
     return;

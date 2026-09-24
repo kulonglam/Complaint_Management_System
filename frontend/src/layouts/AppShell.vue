@@ -42,13 +42,19 @@
               id="global-search"
               v-model="search"
               class="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm"
-              placeholder="Search by reference, title, or description"
+              placeholder="Search reference, title, category, status, or department"
             />
           </div>
         </form>
         <div class="ml-auto flex items-center gap-2">
           <router-link to="/notifications" class="relative rounded-lg p-2 hover:bg-slate-100" aria-label="Notifications">
             <Bell class="h-5 w-5" />
+            <span
+              v-if="notifications.unreadCount.value"
+              class="absolute right-1 top-1 inline-flex min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white"
+            >
+              {{ notifications.unreadCount.value }}
+            </span>
           </router-link>
           <router-link to="/profile" class="rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-100">
             {{ displayName(auth.state.profile) }}
@@ -82,10 +88,12 @@ import {
 } from 'lucide-vue-next';
 import AppButton from '@/components/common/AppButton.vue';
 import { useAuth } from '@/composables/useAuth';
+import { useNotifications } from '@/composables/useNotifications';
 import { supabase } from '@/lib/supabase';
 import { displayName } from '@/lib/utils';
 
 const auth = useAuth();
+const notifications = useNotifications();
 const router = useRouter();
 const mobileOpen = ref(false);
 const search = ref('');
@@ -113,7 +121,9 @@ const nav = computed(() => {
         { to: '/roles', label: 'Roles & permissions', icon: Shield, show: can('roles:view') },
         { to: '/audit-logs', label: 'Audit logs', icon: Shield, show: can('audit_logs:view') },
         { to: '/settings', label: 'Settings', icon: Settings, show: can('settings:view') },
+        { to: '/system-settings', label: 'System settings', icon: SlidersHorizontal, show: auth.isPlatformAdmin.value },
         { to: '/organizations', label: 'Organizations', icon: Building2, show: auth.isPlatformAdmin.value },
+        { to: '/billing', label: 'Billing', icon: FileBarChart, show: auth.isPlatformAdmin.value },
       ],
     },
   ];
@@ -127,6 +137,8 @@ function goSearch() {
 }
 
 async function logout() {
+  await supabase.rpc('mark_logout').catch(() => {});
+  sessionStorage.removeItem('cms-login-audited');
   await supabase.auth.signOut();
   router.push('/login');
 }

@@ -7,6 +7,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class HealthController {
 
+    @GetMapping("/")
+    public Map<String, Object> root() {
+        return Map.of(
+                "ok", true,
+                "service", "complaint-management-backend",
+                "health", "/health"
+        );
+    }
+
     @GetMapping("/health")
     public Map<String, Boolean> health() {
         return Map.of("ok", true);

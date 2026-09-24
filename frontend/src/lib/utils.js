@@ -54,15 +54,33 @@ export function downloadText(filename, text, type = 'text/csv') {
   URL.revokeObjectURL(url);
 }
 
-export function dateRangePreset(preset) {
+export function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
+}
+
+export function isValidPhone(value) {
+  if (!value) return true;
+  return /^\+?[0-9\s().-]{7,20}$/.test(String(value).trim());
+}
+
+export function dateRangePreset(preset, customFrom, customTo) {
+  if (preset === 'custom') {
+    return {
+      from: customFrom ? new Date(`${customFrom}T00:00:00`).toISOString() : null,
+      to: customTo ? new Date(`${customTo}T23:59:59`).toISOString() : null,
+    };
+  }
   const now = new Date();
   const start = new Date(now);
   if (preset === 'today') start.setHours(0, 0, 0, 0);
-  if (preset === 'week') start.setDate(now.getDate() - 7);
-  if (preset === 'month') start.setMonth(now.getMonth() - 1);
-  if (preset === '30') start.setDate(now.getDate() - 30);
-  if (preset === 'quarter') start.setMonth(now.getMonth() - 3);
-  if (preset === 'year') start.setFullYear(now.getFullYear() - 1);
-  if (preset === 'all') return { from: null, to: null };
+  else if (preset === 'week') start.setDate(now.getDate() - now.getDay());
+  else if (preset === 'month') start.setDate(1);
+  else if (preset === '30') start.setDate(now.getDate() - 30);
+  else if (preset === 'quarter') start.setMonth(now.getMonth() - (now.getMonth() % 3), 1);
+  else if (preset === 'year') start.setMonth(0, 1);
+  else if (preset === 'all') return { from: null, to: null };
+  if (preset === 'today' || preset === 'week' || preset === 'month' || preset === 'quarter' || preset === 'year') {
+    start.setHours(0, 0, 0, 0);
+  }
   return { from: start.toISOString(), to: now.toISOString() };
 }

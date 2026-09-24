@@ -1,0 +1,14 @@
+server:
+  port: ${PORT:8000}
+
+spring:
+  application:
+    name: complaint-management-backend
+
+supabase:
+  url: ${SUPABASE_URL:}
+  service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
+
+app:
+  job-secret: ${JOB_SECRET:change-me}
+  cors-origins: ${CORS_ORIGINS:http://localhost:3000}

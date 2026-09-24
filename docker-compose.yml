@@ -1,10 +1,6 @@
 services:
   backend:
-    image: node:22-alpine
-    working_dir: /app/backend
-    command: node src/app.js
-    volumes:
-      - ./backend:/app/backend
+    build: ./backend
     env_file:
       - ./backend/.env
     ports:

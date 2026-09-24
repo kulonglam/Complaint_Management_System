@@ -15,7 +15,7 @@ RPC:
 - `provision_organization`
 - `mark_login`
 
-Express (`backend/`):
+Spring Boot (`backend/`):
 
 - `GET /health`
 - `POST /api/users/invite` (Bearer token, `users:create`)

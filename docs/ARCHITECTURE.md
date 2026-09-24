@@ -1,11 +1,11 @@
 # Architecture
 
-The system is a multi-tenant SaaS. PostgreSQL (Supabase) is the system of record. The Vue client talks to Supabase for authenticated CRUD. Privileged auth-admin operations go through a thin Express API.
+The system is a multi-tenant SaaS. PostgreSQL (Supabase) is the system of record. The Vue client talks to Supabase for authenticated CRUD. Privileged auth-admin operations go through a Spring Boot API.
 
 ```
 Public user  →  submit_public_complaint / track_public_complaint (RPC, anon)
 Staff        →  Supabase Auth + RLS + permission checks
-Admin invite →  Express API + service role
+Admin invite →  Spring Boot API + service role
 SLA job      →  process_sla_jobs()
 ```
 

@@ -8,7 +8,7 @@ The app uses **Vue 3**, **Supabase PostgreSQL + Auth + Storage**, and **Row Leve
 
 - `frontend/` — Vue 3, Vite, Tailwind CSS, Vue Router, TanStack Query
 - `supabase/migrations/` — schema, RPCs, RLS, permissions
-- `backend/` — privileged operations only (user invite, SLA job, email dispatch)
+- `backend/` — Spring Boot API for privileged operations (user invite, SLA job, email dispatch)
 - `scripts/seed.mjs` — demo tenant data
 
 Public complaint submit/track runs through `SECURITY DEFINER` database functions so anonymous users cannot enumerate or read internal records.
@@ -31,7 +31,6 @@ cp backend/.env.example backend/.env
 ```bash
 npm install
 cd frontend && npm install && cd ..
-cd backend && npm install && cd ..
 npm run seed
 cd frontend && npm run dev
 ```
@@ -39,7 +38,15 @@ cd frontend && npm run dev
 In another terminal:
 
 ```bash
-cd backend && npm run dev
+cd backend
+./mvnw spring-boot:run
+```
+
+On Windows PowerShell:
+
+```powershell
+cd backend
+.\mvnw.cmd spring-boot:run
 ```
 
 Frontend: http://localhost:3000  
@@ -76,7 +83,7 @@ Public tracking example: reference `CMP-2026-000001`, tracking code `DEMO-AA01`.
 
 ## Email
 
-`backend/src/services/email.js` is the integration point for SMTP/Resend/Postmark. Templates exist; sending is logged until a provider is connected.
+`backend/src/main/java/com/cms/backend/service/EmailService.java` is the integration point for SMTP/Resend/Postmark. Templates exist; sending is logged until a provider is connected.
 
 ## SLA job
 

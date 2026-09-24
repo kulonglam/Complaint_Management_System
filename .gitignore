@@ -33,3 +33,9 @@ Thumbs.db
 
 # Uploads
 uploads/
+
+# Java
+target/
+*.class
+*.jar
+*.war

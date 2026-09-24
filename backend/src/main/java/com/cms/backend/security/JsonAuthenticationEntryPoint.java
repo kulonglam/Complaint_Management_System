@@ -27,6 +27,10 @@ public class JsonAuthenticationEntryPoint implements AuthenticationEntryPoint {
     ) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        objectMapper.writeValue(response.getWriter(), Map.of("message", "Authentication required"));
+        objectMapper.writeValue(response.getWriter(), Map.of(
+                "message", "Authentication required",
+                "code", "unauthorized",
+                "status", 401
+        ));
     }
 }

@@ -3,15 +3,15 @@
     <div v-if="mobileOpen" class="fixed inset-0 z-30 bg-slate-900/40 lg:hidden" @click="mobileOpen = false" />
     <aside
       :class="[
-        'fixed inset-y-0 left-0 z-40 w-72 transform bg-slate-950 text-slate-300 transition lg:translate-x-0',
+        'fixed inset-y-0 left-0 z-40 flex h-svh w-72 flex-col transform bg-slate-950 text-slate-300 transition lg:translate-x-0',
         mobileOpen ? 'translate-x-0' : '-translate-x-full',
       ]"
     >
-      <div class="border-b border-white/10 px-5 py-5">
+      <div class="shrink-0 border-b border-white/10 px-5 py-5">
         <p class="text-xs uppercase tracking-[0.2em] text-slate-500">CMS</p>
         <p class="mt-1 font-semibold text-white">{{ auth.state.organization?.name || 'Complaint System' }}</p>
       </div>
-      <nav class="space-y-6 overflow-y-auto p-4">
+      <nav class="min-h-0 flex-1 space-y-6 overflow-y-auto overflow-x-hidden p-4 pb-8">
         <section v-for="group in nav" :key="group.label">
           <p class="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{{ group.label }}</p>
           <router-link
@@ -27,10 +27,15 @@
           </router-link>
         </section>
       </nav>
+      <div class="shrink-0 border-t border-white/10 p-4">
+        <AppButton variant="ghost" type="button" class="w-full justify-start text-slate-300 hover:bg-white/10 hover:text-white" @click="logout">
+          Sign out
+        </AppButton>
+      </div>
     </aside>
 
     <div class="lg:pl-72">
-      <header class="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur">
+      <header class="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur">
         <button class="rounded-lg p-2 lg:hidden" type="button" @click="mobileOpen = true" aria-label="Open menu">
           <Menu class="h-5 w-5" />
         </button>
@@ -59,7 +64,7 @@
           <router-link to="/profile" class="rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-100">
             {{ displayName(auth.state.profile) }}
           </router-link>
-          <AppButton variant="ghost" @click="logout">Sign out</AppButton>
+          <AppButton variant="ghost" type="button" @click="logout">Sign out</AppButton>
         </div>
       </header>
       <main class="p-4 lg:p-8">
@@ -89,7 +94,6 @@ import {
 import AppButton from '@/components/common/AppButton.vue';
 import { useAuth } from '@/composables/useAuth';
 import { useNotifications } from '@/composables/useNotifications';
-import { supabase } from '@/lib/supabase';
 import { displayName } from '@/lib/utils';
 
 const auth = useAuth();
@@ -138,9 +142,8 @@ function goSearch() {
 }
 
 async function logout() {
-  await supabase.rpc('mark_logout').catch(() => {});
-  sessionStorage.removeItem('cms-login-audited');
-  await supabase.auth.signOut();
-  router.push('/login');
+  mobileOpen.value = false;
+  await auth.logout();
+  await router.replace({ path: '/login' });
 }
 </script>

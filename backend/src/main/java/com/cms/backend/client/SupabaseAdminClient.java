@@ -7,8 +7,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 import org.springframework.http.HttpStatus;
@@ -37,69 +41,93 @@ public class SupabaseAdminClient {
         this.properties = properties;
     }
 
-    public AuthenticatedUser authenticate(String accessToken) {
-        try {
-            JsonNode user = call(() -> restClient.get()
-                    .uri("/auth/v1/user")
-                    .header("Authorization", "Bearer " + accessToken)
-                    .retrieve()
-                    .body(JsonNode.class));
-
-            if (user == null || user.path("id").isMissingNode()) {
-                throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid session");
-            }
-
-            UUID userId = UUID.fromString(user.path("id").asText());
-            JsonNode profiles = query("/rest/v1/profiles?id=eq." + userId + "&select=id,email,organization_id");
-            JsonNode profile = profiles.isArray() && !profiles.isEmpty()
-                    ? profiles.get(0)
-                    : objectMapper.createObjectNode();
-
-            String organization = profile.path("organization_id").asText();
-            UUID organizationId = organization == null || organization.isBlank() || "null".equals(organization)
-                    ? null
-                    : UUID.fromString(organization);
-
-            return new AuthenticatedUser(userId, user.path("email").asText(), organizationId);
-        } catch (ApiException ex) {
-            if (ex.getStatus() == HttpStatus.BAD_GATEWAY) {
-                throw ex;
-            }
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid session");
-        }
+    public JsonNode authUser(String accessToken) {
+        return call(() -> restClient.get()
+                .uri("/auth/v1/user")
+                .header("Authorization", "Bearer " + accessToken)
+                .retrieve()
+                .body(JsonNode.class));
     }
 
-    public boolean hasPermission(UUID userId, String permission) {
-        String select = "role:roles(key,role_permissions(permission:permissions(key)))";
-        JsonNode rows = query("/rest/v1/user_roles?user_id=eq." + userId + "&select=" + select);
-        if (!rows.isArray()) {
-            return false;
-        }
-        for (JsonNode row : rows) {
-            JsonNode role = row.path("role");
-            if (PLATFORM_ADMIN.equals(role.path("key").asText())) {
-                return true;
-            }
-            for (JsonNode mapping : role.path("role_permissions")) {
-                if (permission.equals(mapping.path("permission").path("key").asText())) {
-                    return true;
+    public AuthenticatedUser loadAuthenticatedUser(UUID userId, String email) {
+        JsonNode profile = findProfile(userId);
+        UUID organizationId = uuidOrNull(profile.path("organization_id").asText());
+        String resolvedEmail = email == null || email.isBlank() ? profile.path("email").asText("") : email;
+
+        List<String> roles = new ArrayList<>();
+        Set<String> permissions = new LinkedHashSet<>();
+        boolean platformAdmin = false;
+        JsonNode rows = query("/rest/v1/user_roles?user_id=eq." + userId
+                + "&select=role:roles(key,role_permissions(permission:permissions(key)))");
+        if (rows.isArray()) {
+            for (JsonNode row : rows) {
+                JsonNode role = row.path("role");
+                String key = role.path("key").asText("");
+                if (!key.isBlank()) {
+                    roles.add(key);
+                }
+                if (PLATFORM_ADMIN.equals(key)) {
+                    platformAdmin = true;
+                }
+                for (JsonNode mapping : role.path("role_permissions")) {
+                    String permission = mapping.path("permission").path("key").asText("");
+                    if (!permission.isBlank()) {
+                        permissions.add(permission);
+                    }
                 }
             }
         }
-        return false;
-    }
-
-    public boolean isPlatformAdmin(UUID userId) {
-        JsonNode rows = query("/rest/v1/user_roles?user_id=eq." + userId + "&select=role:roles(key)");
-        if (!rows.isArray()) {
-            return false;
-        }
-        for (JsonNode row : rows) {
-            if (PLATFORM_ADMIN.equals(row.path("role").path("key").asText())) {
-                return true;
+        if (platformAdmin) {
+            JsonNode all = query("/rest/v1/permissions?select=key");
+            if (all.isArray()) {
+                for (JsonNode item : all) {
+                    String key = item.path("key").asText("");
+                    if (!key.isBlank()) {
+                        permissions.add(key);
+                    }
+                }
             }
         }
-        return false;
+        return new AuthenticatedUser(
+                userId,
+                resolvedEmail,
+                organizationId,
+                platformAdmin,
+                List.copyOf(roles),
+                List.copyOf(permissions)
+        );
+    }
+
+    public QueryPage list(String path, int offset, int limit) {
+        var entity = call(() -> restClient.get()
+                .uri(path)
+                .header("Prefer", "count=exact")
+                .header("Range-Unit", "items")
+                .header("Range", offset + "-" + (offset + Math.max(limit, 1) - 1))
+                .retrieve()
+                .toEntity(JsonNode.class));
+        JsonNode body = entity.getBody() == null ? objectMapper.createArrayNode() : entity.getBody();
+        long total = parseTotal(entity.getHeaders().getFirst("Content-Range"), body.size());
+        return new QueryPage(body, total, offset, limit);
+    }
+
+    public JsonNode getById(String table, UUID id, String select) {
+        JsonNode rows = query("/rest/v1/" + table + "?id=eq." + id + "&select=" + select);
+        if (!rows.isArray() || rows.isEmpty()) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "Not found");
+        }
+        return rows.get(0);
+    }
+
+    public JsonNode userPost(String accessToken, String path, Object body) {
+        return call(() -> restClient.post()
+                .uri(path)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + accessToken)
+                .header("Prefer", "return=representation")
+                .body(body)
+                .retrieve()
+                .body(JsonNode.class));
     }
 
     public JsonNode createAuthUser(String email, String password, String firstName, String lastName) {
@@ -294,7 +322,28 @@ public class SupabaseAdminClient {
         }
     }
 
+    public static UUID uuidOrNull(String value) {
+        if (value == null || value.isBlank() || "null".equals(value)) {
+            return null;
+        }
+        return UUID.fromString(value);
+    }
+
+    private static long parseTotal(String contentRange, int fallback) {
+        if (contentRange == null || !contentRange.contains("/")) {
+            return fallback;
+        }
+        try {
+            return Long.parseLong(contentRange.substring(contentRange.indexOf('/') + 1));
+        } catch (NumberFormatException ex) {
+            return fallback;
+        }
+    }
+
     private static String encode(String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
+    }
+
+    public record QueryPage(JsonNode data, long total, int offset, int limit) {
     }
 }

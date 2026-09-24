@@ -50,7 +50,7 @@ public class EmailOutboxService {
                     );
                     supabaseAdminClient.markEmail(id, delivered ? "SENT" : "PENDING", delivered ? null : "Waiting for SMTP or RESEND_API_KEY");
                     if (!delivered) {
-                        return;
+                        continue;
                     }
                 } catch (Exception ex) {
                     supabaseAdminClient.markEmail(id, "FAILED", ex.getMessage());

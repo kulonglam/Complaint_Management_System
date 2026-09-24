@@ -3,7 +3,6 @@ package com.cms.backend.service;
 import com.cms.backend.client.SupabaseAdminClient;
 import com.cms.backend.dto.InviteUserRequest;
 import com.cms.backend.dto.InviteUserResponse;
-import com.cms.backend.dto.ResetAccessRequest;
 import com.cms.backend.dto.ResetAccessResponse;
 import com.cms.backend.exception.ApiException;
 import com.cms.backend.security.AuthenticatedUser;
@@ -32,12 +31,7 @@ public class UserInviteService {
         if (actor == null) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Authentication required");
         }
-
-        boolean platformAdmin = supabaseAdminClient.isPlatformAdmin(actor.id());
-        if (!platformAdmin && !supabaseAdminClient.hasPermission(actor.id(), Permissions.USERS_CREATE)) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "You do not have permission to create users");
-        }
-        if (actor.organizationId() == null && !platformAdmin) {
+        if (actor.organizationId() == null && !actor.platformAdmin()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "You are not assigned to an organization");
         }
 
@@ -76,27 +70,23 @@ public class UserInviteService {
         return new InviteUserResponse(userId, request.email());
     }
 
-    public ResetAccessResponse resetAccess(AuthenticatedUser actor, ResetAccessRequest request) {
+    public ResetAccessResponse resetAccess(AuthenticatedUser actor, UUID userId) {
         if (actor == null) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Authentication required");
         }
-        boolean platformAdmin = supabaseAdminClient.isPlatformAdmin(actor.id());
-        if (!platformAdmin && !supabaseAdminClient.hasPermission(actor.id(), Permissions.USERS_UPDATE)) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "You do not have permission to reset access");
-        }
 
-        JsonNode profile = supabaseAdminClient.findProfile(request.userId());
+        JsonNode profile = supabaseAdminClient.findProfile(userId);
         if (profile.path("id").isMissingNode()) {
             throw new ApiException(HttpStatus.NOT_FOUND, "User not found");
         }
         String organization = profile.path("organization_id").asText();
-        if (!platformAdmin && (actor.organizationId() == null
+        if (!actor.platformAdmin() && (actor.organizationId() == null
                 || !actor.organizationId().toString().equals(organization))) {
             throw new ApiException(HttpStatus.FORBIDDEN, "You can only reset users in your organization");
         }
 
         String password = temporaryPassword();
-        supabaseAdminClient.updateAuthPassword(request.userId(), password);
+        supabaseAdminClient.updateAuthPassword(userId, password);
         UUID organizationId = organization == null || organization.isBlank() || "null".equals(organization)
                 ? null
                 : UUID.fromString(organization);
@@ -104,7 +94,7 @@ public class UserInviteService {
                 "first_name", profile.path("first_name").asText(""),
                 "temporary_password", password
         ), organizationId);
-        return new ResetAccessResponse(request.userId().toString(), password);
+        return new ResetAccessResponse(userId.toString(), password);
     }
 
     private static String temporaryPassword() {

@@ -12,7 +12,10 @@ public class HealthController {
         return Map.of(
                 "ok", true,
                 "service", "complaint-management-backend",
-                "health", "/health"
+                "health", "/health",
+                "ready", "/ready",
+                "api", "/api/v1",
+                "docs", "/swagger-ui.html"
         );
     }
 

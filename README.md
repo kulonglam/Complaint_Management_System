@@ -8,7 +8,7 @@ The app uses **Vue 3**, **Supabase PostgreSQL + Auth + Storage**, and **Row Leve
 
 - `frontend/` — Vue 3, Vite, Tailwind CSS, Vue Router, TanStack Query
 - `supabase/migrations/` — schema, RPCs, RLS, permissions
-- `backend/` — Spring Boot API for privileged operations (user invite, SLA job, email dispatch)
+- `backend/` — Spring Boot OIDC resource server and versioned REST API (`/api/v1`) for privileged operations, plus OpenAPI at `/swagger-ui.html`
 - `scripts/seed.mjs` — demo tenant data
 
 Public complaint submit/track runs through `SECURITY DEFINER` database functions so anonymous users cannot enumerate or read internal records.

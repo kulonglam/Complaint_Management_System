@@ -17,7 +17,7 @@ class RateLimitFilterTest {
                 "secret", "http://localhost:3000", true, "0 */15 * * * *",
                 false, "noreply@localhost", 2, 60, "", ""
         );
-        RateLimitFilter filter = new RateLimitFilter(app, new SupabaseProperties("", ""), emptyProvider());
+        RateLimitFilter filter = new RateLimitFilter(app, new SupabaseProperties("", "", ""), emptyProvider());
         assertTrue(filter.allow("10.0.0.1"));
         assertTrue(filter.allow("10.0.0.1"));
         assertFalse(filter.allow("10.0.0.1"));

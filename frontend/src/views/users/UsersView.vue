@@ -69,6 +69,7 @@ import Modal from '@/components/common/Modal.vue';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog.vue';
 import FormField from '@/components/forms/FormField.vue';
 import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { useAuth } from '@/composables/useAuth';
 import { useToast } from '@/composables/useToast';
 import { displayName, formatDate, getErrorMessage, isValidEmail } from '@/lib/utils';
@@ -138,16 +139,7 @@ async function invite() {
   if (emailError.value) return;
   saving.value = true;
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/users/invite`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-      },
-      body: JSON.stringify(form),
-    });
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload.message || 'Invite failed');
+    await api('/api/v1/users', { method: 'POST', body: form });
     toast.success('User invited');
     open.value = false;
     queryClient.invalidateQueries({ queryKey: ['users'] });

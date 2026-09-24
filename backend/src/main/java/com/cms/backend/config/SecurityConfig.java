@@ -1,19 +1,22 @@
 package com.cms.backend.config;
 
+import com.cms.backend.security.CmsJwtAuthenticationConverter;
+import com.cms.backend.security.JobKeyAuthenticationFilter;
 import com.cms.backend.security.JsonAccessDeniedHandler;
 import com.cms.backend.security.JsonAuthenticationEntryPoint;
 import com.cms.backend.security.RateLimitFilter;
-import com.cms.backend.security.SupabaseAuthFilter;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -22,38 +25,42 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final AppProperties appProperties;
-    private final SupabaseAuthFilter supabaseAuthFilter;
     private final RateLimitFilter rateLimitFilter;
+    private final JobKeyAuthenticationFilter jobKeyAuthenticationFilter;
+    private final CmsJwtAuthenticationConverter jwtAuthenticationConverter;
     private final JsonAuthenticationEntryPoint authenticationEntryPoint;
     private final JsonAccessDeniedHandler accessDeniedHandler;
 
     public SecurityConfig(
             AppProperties appProperties,
-            SupabaseAuthFilter supabaseAuthFilter,
             RateLimitFilter rateLimitFilter,
+            JobKeyAuthenticationFilter jobKeyAuthenticationFilter,
+            CmsJwtAuthenticationConverter jwtAuthenticationConverter,
             JsonAuthenticationEntryPoint authenticationEntryPoint,
             JsonAccessDeniedHandler accessDeniedHandler
     ) {
         this.appProperties = appProperties;
-        this.supabaseAuthFilter = supabaseAuthFilter;
         this.rateLimitFilter = rateLimitFilter;
+        this.jobKeyAuthenticationFilter = jobKeyAuthenticationFilter;
+        this.jwtAuthenticationConverter = jwtAuthenticationConverter;
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.accessDeniedHandler = accessDeniedHandler;
     }
 
     @Bean
-    FilterRegistrationBean<SupabaseAuthFilter> supabaseAuthFilterRegistration(SupabaseAuthFilter filter) {
-        FilterRegistrationBean<SupabaseAuthFilter> registration = new FilterRegistrationBean<>(filter);
+    FilterRegistrationBean<RateLimitFilter> rateLimitFilterRegistration(RateLimitFilter filter) {
+        FilterRegistrationBean<RateLimitFilter> registration = new FilterRegistrationBean<>(filter);
         registration.setEnabled(false);
         return registration;
     }
 
     @Bean
-    FilterRegistrationBean<RateLimitFilter> rateLimitFilterRegistration(RateLimitFilter filter) {
-        FilterRegistrationBean<RateLimitFilter> registration = new FilterRegistrationBean<>(filter);
+    FilterRegistrationBean<JobKeyAuthenticationFilter> jobKeyFilterRegistration(JobKeyAuthenticationFilter filter) {
+        FilterRegistrationBean<JobKeyAuthenticationFilter> registration = new FilterRegistrationBean<>(filter);
         registration.setEnabled(false);
         return registration;
     }
@@ -72,12 +79,17 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/health", "/ready", "/actuator/health", "/actuator/info").permitAll()
-                        .requestMatchers("/api/jobs/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1").permitAll()
+                        .requestMatchers("/api/jobs/**", "/api/v1/jobs/**").hasRole("JOB")
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())
+                .oauth2ResourceServer(oauth -> oauth
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
+                        .authenticationEntryPoint(authenticationEntryPoint))
                 .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(supabaseAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jobKeyAuthenticationFilter, BearerTokenAuthenticationFilter.class);
         return http.build();
     }
 

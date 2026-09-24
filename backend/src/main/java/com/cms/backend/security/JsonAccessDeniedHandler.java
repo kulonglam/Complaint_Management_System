@@ -27,6 +27,10 @@ public class JsonAccessDeniedHandler implements AccessDeniedHandler {
     ) throws IOException {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        objectMapper.writeValue(response.getWriter(), Map.of("message", "Access denied"));
+        objectMapper.writeValue(response.getWriter(), Map.of(
+                "message", "Access denied",
+                "code", "forbidden",
+                "status", 403
+        ));
     }
 }

@@ -45,9 +45,16 @@ info:
   app:
     name: ${spring.application.name}
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
 supabase:
   url: ${SUPABASE_URL:}
   service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
+  jwt-secret: ${SUPABASE_JWT_SECRET:}
 
 app:
   job-secret: ${JOB_SECRET:change-me}

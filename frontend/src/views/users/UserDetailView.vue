@@ -49,6 +49,7 @@ import FormField from '@/components/forms/FormField.vue';
 import AppButton from '@/components/common/AppButton.vue';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog.vue';
 import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { useAuth } from '@/composables/useAuth';
 import { useToast } from '@/composables/useToast';
 import { displayName, formatDate, getErrorMessage } from '@/lib/utils';
@@ -139,16 +140,7 @@ async function deactivate() {
 async function resetAccess() {
   resetting.value = true;
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/users/reset-access`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-      },
-      body: JSON.stringify({ user_id: user.value.id }),
-    });
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload.message || 'Reset failed');
+    const payload = await api(`/api/v1/users/${user.value.id}/reset-access`, { method: 'POST' });
     toast.success(payload.temporary_password
       ? `Access reset. Temporary password: ${payload.temporary_password}`
       : 'Access reset and emailed if mail is configured.');

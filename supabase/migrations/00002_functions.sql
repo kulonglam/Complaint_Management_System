@@ -1,4 +1,7 @@
 -- Auth helpers, workflow, public submit/track, SLA, notifications, audit
+-- hash_tracking_code uses digest() from pgcrypto (also created in 00001).
+
+create extension if not exists pgcrypto;
 
 create or replace function public.current_profile()
 returns public.profiles

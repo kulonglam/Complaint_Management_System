@@ -3,6 +3,14 @@
     <PageHeader title="Users" description="People in your organization. New accounts are created through the API using your session organization, never a client-supplied tenant id.">
       <AppButton v-if="auth.can('users:create')" @click="startInvite">Invite user</AppButton>
     </PageHeader>
+    <article v-if="invitePassword || inviteWarning" class="surface space-y-2 rounded-2xl p-4">
+      <p v-if="inviteWarning" class="text-sm text-[var(--danger)]">{{ inviteWarning }}</p>
+      <div v-if="invitePassword">
+        <p class="text-xs text-muted">Share this temporary password. Copy it now — it is not shown again.</p>
+        <p class="mt-1 font-mono text-sm break-all">{{ invitePassword }}</p>
+      </div>
+      <AppButton variant="secondary" type="button" @click="clearInviteResult">Dismiss</AppButton>
+    </article>
     <LoadingSkeleton v-if="isLoading" />
     <EmptyState v-else-if="!(users || []).length" title="No users found" message="Invite a staff member to get started.">
       <AppButton v-if="auth.can('users:create')" @click="startInvite">Invite user</AppButton>
@@ -42,11 +50,6 @@
         <FormField v-model="form.last_name" label="Last name" required />
         <FormField v-model="form.role_key" label="Role" type="select" :options="roleOptions" required />
         <p class="text-xs text-muted">The invited user joins your organization automatically.</p>
-        <p v-if="inviteWarning" class="text-sm text-[var(--danger)]">{{ inviteWarning }}</p>
-        <div v-if="invitePassword" class="rounded-2xl border border-[var(--line)] bg-[var(--paper)] p-3">
-          <p class="text-xs text-muted">Share this temporary password. Resend test mode may not deliver the email.</p>
-          <p class="mt-1 font-mono text-sm break-all">{{ invitePassword }}</p>
-        </div>
         <AppButton type="submit" :loading="saving">Send invite</AppButton>
       </form>
     </Modal>
@@ -123,9 +126,13 @@ const { data: roles } = useQuery({
 });
 const roleOptions = computed(() => (roles.value || []).map((role) => ({ value: role.key, label: role.name })));
 
-function startInvite() {
+function clearInviteResult() {
   invitePassword.value = '';
   inviteWarning.value = '';
+}
+
+function startInvite() {
+  clearInviteResult();
   form.email = '';
   form.first_name = '';
   form.last_name = '';
@@ -159,11 +166,14 @@ async function invite() {
   inviteWarning.value = '';
   try {
     const result = await api('/api/v1/users', { method: 'POST', body: form });
-    invitePassword.value = result.temporary_password || '';
-    inviteWarning.value = result.email_warning || '';
-    toast.success(result.email_warning
+    const password = result.temporary_password || result.temporaryPassword || '';
+    const warning = result.email_warning || result.emailWarning || '';
+    invitePassword.value = password;
+    inviteWarning.value = warning;
+    toast.success(warning
       ? 'User created. Copy the temporary password — the email was not delivered.'
       : 'User invited');
+    open.value = false;
     queryClient.invalidateQueries({ queryKey: ['users'] });
   } catch (err) {
     toast.error(getErrorMessage(err, 'Unable to invite this user.'));

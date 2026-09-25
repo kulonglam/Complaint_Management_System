@@ -7,6 +7,7 @@
     "supabase:setup": "node scripts/setup-supabase.mjs",
     "supabase:migrate": "node scripts/apply-migrations.mjs",
     "supabase:production": "node scripts/setup-production.mjs",
+    "site:origin": "node scripts/set-site-origin.mjs",
     "test:isolation": "node scripts/test-isolation.mjs",
     "test": "npm --prefix frontend test && npm run test:isolation",
     "dev:frontend": "npm --prefix frontend run dev",

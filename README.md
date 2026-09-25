@@ -62,6 +62,10 @@ cd backend
 Frontend: http://localhost:3000  
 API: http://localhost:8000
 
+## Deploy
+
+Hosted database is already Supabase. Put the Vue app and Spring API on Render (or Vercel + Render). Steps: [docs/DEPLOY.md](docs/DEPLOY.md).
+
 ## Demo accounts
 
 Password for all seed users: `DemoPass123!`

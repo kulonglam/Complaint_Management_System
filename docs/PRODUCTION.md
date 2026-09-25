@@ -1,6 +1,6 @@
 # Production checklist
 
-Do not call the system production-ready until every item below is true.
+Deploy steps live in [DEPLOY.md](DEPLOY.md). Do not call the system production-ready until every item below is true.
 
 ## Required
 

@@ -1,6 +1,7 @@
 server:
   port: ${PORT:8000}
   shutdown: graceful
+  forward-headers-strategy: framework
   error:
     whitelabel:
       enabled: false

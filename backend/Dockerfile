@@ -12,7 +12,8 @@ RUN apk add --no-cache wget \
 WORKDIR /app
 COPY --from=build /app/target/complaint-management-backend-1.0.0.jar app.jar
 USER cms
+ENV PORT=8000
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=25s --retries=3 \
-    CMD wget -qO- http://127.0.0.1:8000/health >/dev/null || exit 1
+    CMD ["sh", "-c", "wget -qO- http://127.0.0.1:${PORT:-8000}/health >/dev/null || exit 1"]
 ENTRYPOINT ["java", "-jar", "app.jar"]

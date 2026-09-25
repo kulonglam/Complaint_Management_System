@@ -165,7 +165,15 @@ async function invite() {
   invitePassword.value = '';
   inviteWarning.value = '';
   try {
-    const result = await api('/api/v1/users', { method: 'POST', body: form });
+    const result = await api('/api/v1/users', {
+      method: 'POST',
+      body: {
+        email: form.email.trim(),
+        first_name: form.first_name.trim(),
+        last_name: form.last_name.trim(),
+        role_key: form.role_key,
+      },
+    });
     const password = result.temporary_password || result.temporaryPassword || '';
     const warning = result.email_warning || result.emailWarning || '';
     invitePassword.value = password;

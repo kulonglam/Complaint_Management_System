@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,7 @@ import org.springframework.web.client.RestClientResponseException;
 @Component
 public class SupabaseAdminClient {
 
+    private static final Logger log = LoggerFactory.getLogger(SupabaseAdminClient.class);
     private static final String PLATFORM_ADMIN = "platform_administrator";
 
     private final RestClient restClient;
@@ -182,7 +185,7 @@ public class SupabaseAdminClient {
             if (ex.getStatus() == HttpStatus.BAD_GATEWAY) {
                 throw ex;
             }
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Unable to invite this user.");
+            throw new ApiException(ex.getStatus(), inviteErrorMessage(ex.getMessage()));
         }
     }
 
@@ -406,7 +409,15 @@ public class SupabaseAdminClient {
                     "Cannot reach Supabase at " + properties.url() + ". Check SUPABASE_URL."
             );
         } catch (RestClientResponseException ex) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Supabase rejected the request.");
+            HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
+            if (status == null || status.is5xxServerError()) {
+                status = HttpStatus.BAD_GATEWAY;
+            } else if (status == HttpStatus.UNAUTHORIZED || status == HttpStatus.FORBIDDEN) {
+                status = HttpStatus.BAD_REQUEST;
+            }
+            String message = supabaseErrorMessage(ex);
+            log.warn("supabase request failed status={} message={}", ex.getStatusCode().value(), message);
+            throw new ApiException(status, message);
         }
     }
 
@@ -426,6 +437,38 @@ public class SupabaseAdminClient {
         } catch (NumberFormatException ex) {
             return fallback;
         }
+    }
+
+    private String supabaseErrorMessage(RestClientResponseException ex) {
+        String body = ex.getResponseBodyAsString();
+        if (body != null && !body.isBlank()) {
+            try {
+                JsonNode node = objectMapper.readTree(body);
+                for (String field : List.of("message", "msg", "error_description", "error")) {
+                    String value = node.path(field).asText("");
+                    if (!value.isBlank()) {
+                        return value;
+                    }
+                }
+            } catch (Exception ignored) {
+                // Use the fallback below when the body is not JSON.
+            }
+        }
+        return "Supabase rejected the request.";
+    }
+
+    static String inviteErrorMessage(String message) {
+        String text = message == null ? "" : message.toLowerCase();
+        if (text.contains("already") || text.contains("email_exists") || text.contains("registered")) {
+            return "This email already has an account. Open the user and reset access instead of inviting again.";
+        }
+        if (text.contains("reached its")) {
+            return message;
+        }
+        if (message == null || message.isBlank() || "supabase rejected the request.".equals(text)) {
+            return "Unable to invite this user. The email may already be in use.";
+        }
+        return message;
     }
 
     private static String encode(String value) {

@@ -45,6 +45,7 @@ const routes = [
       { path: 'system-settings', name: 'system-settings', meta: { platform: true }, component: () => import('@/views/admin/SystemSettingsView.vue') },
       { path: 'organizations', name: 'organizations', meta: { platform: true }, component: () => import('@/views/admin/OrganizationsView.vue') },
       { path: 'billing', name: 'billing', meta: { permission: 'settings:view' }, component: () => import('@/views/admin/BillingView.vue') },
+      { path: 'billing/return', name: 'billing-return', meta: { permission: 'settings:view' }, component: () => import('@/views/admin/PaymentReturnView.vue') },
       { path: 'email-log', name: 'email-log', meta: { permission: 'settings:view' }, component: () => import('@/views/admin/EmailLogView.vue') },
       { path: 'profile', name: 'profile', component: () => import('@/views/settings/ProfileView.vue') },
     ],

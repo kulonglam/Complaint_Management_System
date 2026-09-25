@@ -30,7 +30,7 @@ Do not call the system enterprise-production until every **required** item is tr
 
 ## Optional later
 
-- [ ] `STRIPE_SECRET_KEY` if you want card checkout
+- [ ] Uganda payments: `PESAPAL_CONSUMER_KEY` / `PESAPAL_CONSUMER_SECRET`, `MTN_*`, and `AIRTEL_*` (Stripe is not used)
 - [ ] ClamAV / vendor malware scan on `complaint-attachments` (`scan_status` is already on the row)
 - [ ] External IdP (Entra / Okta) beyond GitHub/Google
 - [ ] Independent pentest and a written DPIA

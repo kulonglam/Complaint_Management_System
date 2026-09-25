@@ -15,7 +15,11 @@ class RateLimitFilterTest {
     void localWindowBlocksAfterCapacity() {
         AppProperties app = new AppProperties(
                 "secret", "http://localhost:3000", true, "0 */15 * * * *",
-                false, "noreply@localhost", 2, 60, "", "", true, "0 30 2 * * *"
+                false, "noreply@localhost", 2, 60, "", "", true, "0 30 2 * * *",
+                "UGX", false, "http://localhost:8000",
+                "", "", "", "sandbox",
+                "", "", "", "sandbox",
+                "", "", "sandbox"
         );
         RateLimitFilter filter = new RateLimitFilter(app, new SupabaseProperties("", "", ""), emptyProvider());
         assertTrue(filter.allow("10.0.0.1"));

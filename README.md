@@ -105,6 +105,10 @@ npm run test:isolation
 - Profiles cannot change `organization_id` unless the actor is a platform admin
 - Service role key is backend-only
 
+## Payments
+
+Billing is in UGX. Organizations pay with **MTN Mobile Money**, **Airtel Money**, or **Pesapal**. Stripe is not used. Set the provider keys in `backend/.env`; with no keys, Billing can confirm a local demo payment.
+
 ## Email
 
 `backend/src/main/java/com/cms/backend/service/EmailService.java` is the integration point for SMTP/Resend/Postmark. Templates exist; sending is logged until a provider is connected.

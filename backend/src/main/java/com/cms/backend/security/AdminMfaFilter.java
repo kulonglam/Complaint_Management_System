@@ -29,6 +29,7 @@ public class AdminMfaFilter extends OncePerRequestFilter {
         return path.equals("/api/v1/me")
                 || path.startsWith("/api/jobs")
                 || path.startsWith("/api/v1/jobs")
+                || path.startsWith("/api/v1/payments/ipn")
                 || !path.startsWith("/api/");
     }
 

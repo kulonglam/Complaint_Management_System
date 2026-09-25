@@ -25,6 +25,10 @@ Spring validates the token as an OIDC resource server (JWKS at `{SUPABASE_URL}/a
 | `GET` | `/api/v1/audit-logs` | `audit_logs:view` |
 | `GET` | `/api/v1/audit-logs/export` | `audit_logs:view` / `reports:export` |
 | `POST` | `/api/v1/privacy/erasure` | `settings:update` |
+| `GET` | `/api/v1/payments/methods` | `settings:view` |
+| `POST` | `/api/v1/payments` | `settings:update` |
+| `GET` | `/api/v1/payments/{id}` | `settings:view` |
+| `GET`/`POST` | `/api/v1/payments/ipn/pesapal` | Pesapal IPN |
 | `POST` | `/api/v1/jobs/sla` | `x-job-key` |
 | `POST` | `/api/v1/jobs/retention` | `x-job-key` |
 

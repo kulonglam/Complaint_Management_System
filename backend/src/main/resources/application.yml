@@ -70,6 +70,20 @@ app:
   stripe-secret-key: ${STRIPE_SECRET_KEY:}
   retention-enabled: ${RETENTION_JOB_ENABLED:true}
   retention-cron: ${RETENTION_CRON:0 30 2 * * *}
+  payment-currency: ${PAYMENT_CURRENCY:UGX}
+  payment-demo: ${PAYMENT_DEMO:false}
+  public-api-url: ${PUBLIC_API_URL:http://localhost:8000}
+  pesapal-consumer-key: ${PESAPAL_CONSUMER_KEY:}
+  pesapal-consumer-secret: ${PESAPAL_CONSUMER_SECRET:}
+  pesapal-ipn-id: ${PESAPAL_IPN_ID:}
+  pesapal-environment: ${PESAPAL_ENVIRONMENT:sandbox}
+  mtn-subscription-key: ${MTN_SUBSCRIPTION_KEY:}
+  mtn-api-user: ${MTN_API_USER:}
+  mtn-api-key: ${MTN_API_KEY:}
+  mtn-target-environment: ${MTN_TARGET_ENVIRONMENT:sandbox}
+  airtel-client-id: ${AIRTEL_CLIENT_ID:}
+  airtel-client-secret: ${AIRTEL_CLIENT_SECRET:}
+  airtel-environment: ${AIRTEL_ENVIRONMENT:sandbox}
 
 sentry:
   dsn: ${SENTRY_DSN:}

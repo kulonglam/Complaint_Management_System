@@ -150,6 +150,7 @@ const crumbs = {
   audit: 'Administration / Audit',
   settings: 'Administration / Settings',
   billing: 'Administration / Billing',
+  'billing-return': 'Administration / Billing',
   'email-log': 'Administration / Email log',
   'system-settings': 'Platform / System',
   organizations: 'Platform / Organizations',

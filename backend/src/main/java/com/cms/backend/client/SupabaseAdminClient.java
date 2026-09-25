@@ -111,6 +111,36 @@ public class SupabaseAdminClient {
         return new QueryPage(body, total, offset, limit);
     }
 
+    public JsonNode insertReturning(String table, Map<String, Object> body) {
+        JsonNode created = call(() -> restClient.post()
+                .uri("/rest/v1/" + table)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Prefer", "return=representation")
+                .body(body)
+                .retrieve()
+                .body(JsonNode.class));
+        if (created != null && created.isArray() && !created.isEmpty()) {
+            return created.get(0);
+        }
+        if (created != null && created.isObject() && !created.path("id").isMissingNode()) {
+            return created;
+        }
+        throw new ApiException(HttpStatus.BAD_GATEWAY, "Unable to save this payment.");
+    }
+
+    public void patchById(String table, UUID id, Map<String, Object> body) {
+        patch(table + "?id=eq." + id, body);
+    }
+
+    public void patch(String path, Map<String, Object> body) {
+        call(() -> restClient.patch()
+                .uri("/rest/v1/" + path)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve()
+                .toBodilessEntity());
+    }
+
     public JsonNode getById(String table, UUID id, String select) {
         JsonNode rows = query("/rest/v1/" + table + "?id=eq." + id + "&select=" + select);
         if (!rows.isArray() || rows.isEmpty()) {

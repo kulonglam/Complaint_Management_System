@@ -103,6 +103,7 @@ public class SecurityConfig {
                         .requestMatchers("/", "/health", "/ready", "/actuator/health", "/actuator/info").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1").permitAll()
+                        .requestMatchers("/api/v1/payments/ipn/**").permitAll()
                         .requestMatchers("/api/jobs/**", "/api/v1/jobs/**").hasRole("JOB")
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/**").authenticated()

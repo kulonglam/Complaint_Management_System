@@ -18,6 +18,7 @@ public class ApiCatalogController {
         resources.put("emails", "/api/v1/emails");
         resources.put("auditLogs", "/api/v1/audit-logs");
         resources.put("privacy", "/api/v1/privacy/erasure");
+        resources.put("payments", "/api/v1/payments");
         resources.put("jobs", "/api/v1/jobs/sla");
         return Map.of(
                 "name", "complaint-management-api",

@@ -30,7 +30,12 @@ public class ReadinessController {
                 "supabase", supabase,
                 "mail_delivery", mail,
                 "sentry", sentry,
-                "stripe", appProperties.stripeSecretKey() != null && !appProperties.stripeSecretKey().isBlank()
+                "payments", Map.of(
+                        "currency", appProperties.paymentCurrency(),
+                        "mtn", appProperties.mtnConfigured(),
+                        "airtel", appProperties.airtelConfigured(),
+                        "pesapal", appProperties.pesapalConfigured()
+                )
         );
         return ResponseEntity.status(supabase ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE).body(body);
     }

@@ -60,8 +60,12 @@ public class EmailOutboxService {
                     supabaseAdminClient.markEmail(id, nextStatus, message, attempts);
                 } catch (Exception ex) {
                     int attempts = row.path("attempt_count").asInt(0) + 1;
-                    String nextStatus = attempts >= 8 ? "FAILED" : "PENDING";
-                    supabaseAdminClient.markEmail(id, nextStatus, ex.getMessage(), attempts);
+                    boolean permanent = EmailService.permanentDeliveryFailure(EmailService.flattenMailError(ex));
+                    String nextStatus = permanent || attempts >= 8 ? "FAILED" : "PENDING";
+                    String message = permanent
+                            ? EmailService.userFacingMailError(ex)
+                            : ex.getMessage();
+                    supabaseAdminClient.markEmail(id, nextStatus, message, attempts);
                     log.warn("email outbox failed id={}: {}", id, ex.getMessage());
                 }
             }

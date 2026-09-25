@@ -1,11 +1,11 @@
 <template>
   <section class="space-y-6">
     <PageHeader title="Users" description="People in your organization. New accounts are created through the API using your session organization, never a client-supplied tenant id.">
-      <AppButton v-if="auth.can('users:create')" @click="open = true">Invite user</AppButton>
+      <AppButton v-if="auth.can('users:create')" @click="startInvite">Invite user</AppButton>
     </PageHeader>
     <LoadingSkeleton v-if="isLoading" />
     <EmptyState v-else-if="!(users || []).length" title="No users found" message="Invite a staff member to get started.">
-      <AppButton v-if="auth.can('users:create')" @click="open = true">Invite user</AppButton>
+      <AppButton v-if="auth.can('users:create')" @click="startInvite">Invite user</AppButton>
     </EmptyState>
     <DataTable
       v-else
@@ -42,6 +42,11 @@
         <FormField v-model="form.last_name" label="Last name" required />
         <FormField v-model="form.role_key" label="Role" type="select" :options="roleOptions" required />
         <p class="text-xs text-muted">The invited user joins your organization automatically.</p>
+        <p v-if="inviteWarning" class="text-sm text-[var(--danger)]">{{ inviteWarning }}</p>
+        <div v-if="invitePassword" class="rounded-2xl border border-[var(--line)] bg-[var(--paper)] p-3">
+          <p class="text-xs text-muted">Share this temporary password. Resend test mode may not deliver the email.</p>
+          <p class="mt-1 font-mono text-sm break-all">{{ invitePassword }}</p>
+        </div>
         <AppButton type="submit" :loading="saving">Send invite</AppButton>
       </form>
     </Modal>
@@ -92,6 +97,8 @@ const saving = ref(false);
 const deactivating = ref(false);
 const pendingUser = ref(null);
 const form = reactive({ email: '', first_name: '', last_name: '', role_key: 'investigator' });
+const invitePassword = ref('');
+const inviteWarning = ref('');
 const emailError = computed(() => (form.email && !isValidEmail(form.email) ? 'Enter a valid email address.' : ''));
 
 const { data: users, isLoading } = useQuery({
@@ -116,6 +123,16 @@ const { data: roles } = useQuery({
 });
 const roleOptions = computed(() => (roles.value || []).map((role) => ({ value: role.key, label: role.name })));
 
+function startInvite() {
+  invitePassword.value = '';
+  inviteWarning.value = '';
+  form.email = '';
+  form.first_name = '';
+  form.last_name = '';
+  form.role_key = 'investigator';
+  open.value = true;
+}
+
 function askDeactivate(user) {
   pendingUser.value = user;
 }
@@ -138,10 +155,15 @@ async function deactivate() {
 async function invite() {
   if (emailError.value) return;
   saving.value = true;
+  invitePassword.value = '';
+  inviteWarning.value = '';
   try {
-    await api('/api/v1/users', { method: 'POST', body: form });
-    toast.success('User invited');
-    open.value = false;
+    const result = await api('/api/v1/users', { method: 'POST', body: form });
+    invitePassword.value = result.temporary_password || '';
+    inviteWarning.value = result.email_warning || '';
+    toast.success(result.email_warning
+      ? 'User created. Copy the temporary password — the email was not delivered.'
+      : 'User invited');
     queryClient.invalidateQueries({ queryKey: ['users'] });
   } catch (err) {
     toast.error(getErrorMessage(err, 'Unable to invite this user.'));

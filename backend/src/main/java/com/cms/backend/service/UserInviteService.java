@@ -62,12 +62,13 @@ public class UserInviteService {
             supabaseAdminClient.upsertUserRole(userId, roleId, organizationId);
         }
 
-        emailService.send("user-invited", request.email(), Map.of(
+        EmailService.SendResult email = emailService.send("user-invited", request.email(), Map.of(
                 "first_name", request.firstName(),
-                "organization", organizationId == null ? "" : organizationId.toString()
+                "organization", organizationId == null ? "" : organizationId.toString(),
+                "temporary_password", password
         ), organizationId);
 
-        return new InviteUserResponse(userId, request.email());
+        return new InviteUserResponse(userId, request.email(), password, email.warning());
     }
 
     public ResetAccessResponse resetAccess(AuthenticatedUser actor, UUID userId) {

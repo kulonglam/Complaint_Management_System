@@ -17,4 +17,13 @@ class EmailServiceTest {
     void renderLeavesUnknownPlaceholders() {
         assertEquals("Hello {name}", EmailService.render("Hello {name}", Map.of()));
     }
+
+    @Test
+    void resendTestingRestrictionIsPermanent() {
+        String message = "550 You can only send testing emails to your own email address. verify a domain at resend.com/domains";
+        org.junit.jupiter.api.Assertions.assertTrue(EmailService.permanentDeliveryFailure(message));
+        org.junit.jupiter.api.Assertions.assertTrue(
+                EmailService.userFacingMailError(new RuntimeException(message)).contains("test mode")
+        );
+    }
 }

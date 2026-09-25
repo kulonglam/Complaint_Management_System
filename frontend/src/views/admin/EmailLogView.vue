@@ -1,6 +1,6 @@
 <template>
   <section class="space-y-6">
-    <PageHeader title="Email log" description="Every notification is stored here. Messages stay pending until SMTP or Resend is configured." />
+    <PageHeader title="Email log" description="Every notification is stored here. Resend test mode can only deliver to the account owner's email until you verify a domain." />
     <LoadingSkeleton v-if="isLoading" />
     <EmptyState v-else-if="!(items || []).length" title="No emails yet" message="Complaint and invite emails will appear here after they are queued." />
     <DataTable v-else :columns="columns" :rows="items || []">

@@ -136,10 +136,14 @@ public class PaymentService {
     }
 
     public Map<String, Object> confirmDemo(AuthenticatedUser actor, UUID id) {
-        if (!app.paymentDemo() && anyConfigured()) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Demo confirmation is disabled when live payment keys are set.");
-        }
         JsonNode payment = load(actor, id);
+        String provider = normalizeProvider(payment.path("provider").asText());
+        if (!app.paymentDemo() && providerConfigured(provider)) {
+            throw new ApiException(
+                    HttpStatus.FORBIDDEN,
+                    "Demo confirmation is disabled for " + provider + " because its keys are set. Start a new payment and finish it with that provider."
+            );
+        }
         markPaid(payment);
         return Map.of("id", id.toString(), "status", "PAID", "demo", true);
     }

@@ -3,6 +3,7 @@ package com.cms.backend.service;
 import com.cms.backend.client.SupabaseAdminClient;
 import com.cms.backend.config.AppProperties;
 import com.cms.backend.config.SupabaseProperties;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -40,7 +41,7 @@ public class EmailService {
             "complaint-reopened", "Complaint {reference_number} has been reopened.",
             "sla-warning", "Complaint {reference_number} is approaching its due date.",
             "complaint-overdue", "Complaint {reference_number} is overdue.",
-            "user-invited", "Hello {first_name}, you have been invited to the complaint platform."
+            "user-invited", "Hello {first_name}, you have been invited to the complaint platform. Sign in at {login_url} with this temporary password: {temporary_password}"
     );
 
     private final AppProperties appProperties;
@@ -64,13 +65,63 @@ public class EmailService {
         send(template, to, data, null);
     }
 
-    public void send(String template, String to, Map<String, Object> data, UUID organizationId) {
+    public SendResult send(String template, String to, Map<String, Object> data, UUID organizationId) {
+        Map<String, Object> payload = withInviteDefaults(template, data);
         String subject = SUBJECTS.getOrDefault(template, template);
-        String body = render(BODIES.getOrDefault(template, template), data);
-        persist(organizationId, to, template, data);
-        if (!deliver(to, subject, body)) {
+        String body = render(BODIES.getOrDefault(template, template), payload);
+        persist(organizationId, to, template, payload);
+        try {
+            if (deliver(to, subject, body)) {
+                return SendResult.ok();
+            }
             log.info("email stored in outbox template={} to={} subject={}", template, to, subject);
+            return SendResult.queued();
+        } catch (Exception ex) {
+            log.warn("email delivery failed template={} to={}: {}", template, to, ex.getMessage());
+            return SendResult.failed(userFacingMailError(ex));
         }
+    }
+
+    public record SendResult(boolean delivered, String warning) {
+        static SendResult ok() {
+            return new SendResult(true, null);
+        }
+
+        static SendResult queued() {
+            return new SendResult(false, "The invite was saved. Email is waiting in the outbox until delivery succeeds.");
+        }
+
+        static SendResult failed(String warning) {
+            return new SendResult(false, warning);
+        }
+    }
+
+    static boolean permanentDeliveryFailure(String message) {
+        String text = message == null ? "" : message.toLowerCase();
+        return text.contains("only send testing emails") || text.contains("verify a domain at resend.com");
+    }
+
+    static String userFacingMailError(Throwable error) {
+        String message = flattenMailError(error);
+        if (permanentDeliveryFailure(message)) {
+            return "Resend is in test mode. It can only send to the account owner's email until you verify a domain at resend.com/domains.";
+        }
+        return "The user was created, but the invite email could not be sent. Copy the temporary password below.";
+    }
+
+    static String flattenMailError(Throwable error) {
+        StringBuilder text = new StringBuilder();
+        Throwable current = error;
+        while (current != null) {
+            if (current.getMessage() != null) {
+                if (!text.isEmpty()) {
+                    text.append(' ');
+                }
+                text.append(current.getMessage());
+            }
+            current = current.getCause();
+        }
+        return text.toString();
     }
 
     public boolean deliver(String template, String to, Map<String, Object> data) {
@@ -88,6 +139,17 @@ public class EmailService {
             result = result.replace("{" + entry.getKey() + "}", String.valueOf(entry.getValue()));
         }
         return result;
+    }
+
+    private Map<String, Object> withInviteDefaults(String template, Map<String, Object> data) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        if (data != null) {
+            payload.putAll(data);
+        }
+        if ("user-invited".equals(template) && !payload.containsKey("login_url")) {
+            payload.put("login_url", appProperties.frontendOrigin() + "/login");
+        }
+        return payload;
     }
 
     private void persist(UUID organizationId, String to, String template, Map<String, Object> data) {

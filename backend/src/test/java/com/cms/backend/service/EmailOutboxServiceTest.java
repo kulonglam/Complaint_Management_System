@@ -77,6 +77,32 @@ class EmailOutboxServiceTest {
         verify(supabaseAdminClient).markEmail(eq(first), eq("FAILED"), eq("Gave up after 8 delivery attempts"), eq(8));
     }
 
+    @Test
+    void processOutboxFailsPermanentlyForResendTestMode() {
+        UUID first = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        ObjectMapper mapper = new ObjectMapper();
+        ArrayNode rows = mapper.createArrayNode();
+        rows.add(pendingRow(mapper, first, "user-invited", "other@example.com"));
+
+        when(supabaseAdminClient.pendingEmails()).thenReturn(rows);
+        when(emailService.deliver(eq("user-invited"), eq("other@example.com"), any(Map.class)))
+                .thenThrow(new RuntimeException("550 You can only send testing emails to your own email address. verify a domain at resend.com/domains"));
+
+        EmailOutboxService service = new EmailOutboxService(
+                supabaseAdminClient,
+                new SupabaseProperties("https://example.supabase.co", "service-role", ""),
+                emailService
+        );
+        service.processOutbox();
+
+        verify(supabaseAdminClient).markEmail(
+                eq(first),
+                eq("FAILED"),
+                eq("Resend is in test mode. It can only send to the account owner's email until you verify a domain at resend.com/domains."),
+                eq(1)
+        );
+    }
+
     private static ObjectNode pendingRow(ObjectMapper mapper, UUID id, String template, String to) {
         ObjectNode row = mapper.createObjectNode();
         row.put("id", id.toString());

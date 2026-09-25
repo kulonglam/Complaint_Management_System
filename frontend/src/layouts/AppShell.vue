@@ -201,8 +201,8 @@ const nav = computed(() => {
 const commands = computed(() => [
   { id: 'search', label: 'Search complaints', hint: 'Cases', to: { path: '/complaints' } },
   { id: 'overdue', label: 'Review overdue cases', hint: 'Cases', to: { path: '/complaints', query: { overdue: '1' } } },
-  ...nav.value.flatMap((group) => group.items.map((item) => ({
-    id: `nav:${typeof item.to === 'string' ? item.to : item.to?.path || item.label}`,
+  ...nav.value.flatMap((group) => group.items.map((item, index) => ({
+    id: `nav:${group.label}:${index}:${typeof item.to === 'string' ? item.to : item.to?.path || item.to?.name || 'item'}`,
     label: item.label,
     hint: group.label,
     to: item.to,

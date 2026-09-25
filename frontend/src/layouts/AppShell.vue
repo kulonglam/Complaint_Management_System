@@ -157,7 +157,7 @@ const crumbs = {
 };
 
 const crumb = computed(() => crumbs[route.name] || 'Workspace');
-const isDark = computed(() => theme.state.appearance === 'dark' || (theme.state.appearance === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches));
+const isDark = theme.isDark;
 
 function openPalette() {
   window.dispatchEvent(new Event('cms-palette'));
@@ -202,7 +202,7 @@ const commands = computed(() => [
   { id: 'search', label: 'Search complaints', hint: 'Cases', to: { path: '/complaints' } },
   { id: 'overdue', label: 'Review overdue cases', hint: 'Cases', to: { path: '/complaints', query: { overdue: '1' } } },
   ...nav.value.flatMap((group) => group.items.map((item) => ({
-    id: item.to,
+    id: `nav:${typeof item.to === 'string' ? item.to : item.to?.path || item.label}`,
     label: item.label,
     hint: group.label,
     to: item.to,

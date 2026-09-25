@@ -41,12 +41,12 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import { Menu, Moon, Sun } from 'lucide-vue-next';
 import BrandMark from '@/components/common/BrandMark.vue';
 import { useTheme } from '@/composables/useTheme';
 
 const open = ref(false);
 const theme = useTheme();
-const isDark = computed(() => theme.state.appearance === 'dark' || (theme.state.appearance === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches));
+const isDark = theme.isDark;
 </script>

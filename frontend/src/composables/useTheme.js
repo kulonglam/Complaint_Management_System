@@ -1,13 +1,26 @@
-import { reactive, watch } from 'vue';
+import { computed, effectScope, onScopeDispose, reactive, watch } from 'vue';
 import { useAuth } from './useAuth';
 
 const DEFAULT = '#0c6b5c';
 const state = reactive({
   appearance: localStorage.getItem('cms-appearance') || 'system',
   density: localStorage.getItem('cms-density') || 'comfortable',
+  prefersDark: false,
 });
 
-let started = false;
+const isDark = computed(() => state.appearance === 'dark' || (state.appearance === 'system' && state.prefersDark));
+
+let consumers = 0;
+let scope = null;
+let mediaQuery = null;
+let onPrefersChange = null;
+
+function getMedia() {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return { matches: false, addEventListener() {}, removeEventListener() {} };
+  }
+  return window.matchMedia('(prefers-color-scheme: dark)');
+}
 
 function hexToRgb(hex) {
   const value = String(hex || '').replace('#', '');
@@ -27,41 +40,65 @@ function applyAccent(hex) {
   root.style.setProperty('--accent', color);
   root.style.setProperty('--color-accent', color);
   root.style.setProperty('--accent-hover', `color-mix(in srgb, ${color} 82%, #000)`);
-  const mixInto = root.classList.contains('dark') ? '#1e1a16' : '#fffdf8';
+  const mixInto = isDark.value ? '#1e1a16' : '#fffdf8';
   root.style.setProperty('--accent-soft', `color-mix(in srgb, ${color} 18%, ${mixInto})`);
 }
 
 function applyChrome() {
   const root = document.documentElement;
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const dark = state.appearance === 'dark' || (state.appearance === 'system' && prefersDark);
-  root.classList.toggle('dark', dark);
+  root.classList.toggle('dark', isDark.value);
   root.classList.toggle('compact', state.density === 'compact');
   localStorage.setItem('cms-appearance', state.appearance);
   localStorage.setItem('cms-density', state.density);
 }
 
-function start() {
-  if (started) return;
-  started = true;
-  const auth = useAuth();
-  const refresh = () => {
-    applyChrome();
-    applyAccent(auth.state.organization?.primary_color || DEFAULT);
+function ensureStarted(auth) {
+  consumers += 1;
+  if (scope) return;
+
+  mediaQuery = getMedia();
+  state.prefersDark = Boolean(mediaQuery.matches);
+  onPrefersChange = (event) => {
+    state.prefersDark = event.matches;
   };
-  watch(() => [state.appearance, state.density, auth.state.organization?.primary_color], refresh, { immediate: true });
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', refresh);
+  mediaQuery.addEventListener('change', onPrefersChange);
+
+  scope = effectScope(true);
+  scope.run(() => {
+    watch(
+      () => [state.appearance, state.density, state.prefersDark, auth.state.organization?.primary_color],
+      () => {
+        applyChrome();
+        applyAccent(auth.state.organization?.primary_color || DEFAULT);
+      },
+      { immediate: true }
+    );
+  });
+}
+
+function release() {
+  consumers = Math.max(0, consumers - 1);
+  if (consumers > 0 || !scope) return;
+  mediaQuery?.removeEventListener('change', onPrefersChange);
+  scope.stop();
+  scope = null;
+  mediaQuery = null;
+  onPrefersChange = null;
 }
 
 export function useTheme() {
-  start();
+  const auth = useAuth();
+  ensureStarted(auth);
+  onScopeDispose(release);
+
   return {
     state,
+    isDark,
     setAppearance(value) {
       state.appearance = value;
     },
     toggleAppearance() {
-      state.appearance = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+      state.appearance = isDark.value ? 'light' : 'dark';
     },
     setDensity(value) {
       state.density = value;

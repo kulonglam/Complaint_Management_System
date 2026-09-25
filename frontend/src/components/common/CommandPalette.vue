@@ -15,7 +15,7 @@
           @keydown.enter="run(filtered[0])"
         />
         <ul class="max-h-80 overflow-y-auto p-2">
-          <li v-for="item in filtered" :key="item.id">
+          <li v-for="item in filtered" :key="String(item.id)">
             <button
               class="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm hover:bg-[var(--paper)]"
               type="button"

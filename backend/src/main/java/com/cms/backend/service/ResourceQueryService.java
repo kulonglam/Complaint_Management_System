@@ -123,6 +123,41 @@ public class ResourceQueryService {
         ));
     }
 
+    public PageResponse auditLogs(AuthenticatedUser actor, String from, String to, int offset, int limit) {
+        requireOrg(actor);
+        StringBuilder path = new StringBuilder(
+                "/rest/v1/audit_logs?select=id,created_at,action,entity_type,entity_id,user_id,old_values,new_values,metadata,organization_id&order=created_at.desc"
+        );
+        if (!actor.platformAdmin()) {
+            path.append("&organization_id=eq.").append(actor.organizationId());
+        }
+        if (from != null && !from.isBlank()) {
+            path.append("&created_at=gte.").append(from);
+        }
+        if (to != null && !to.isBlank()) {
+            path.append("&created_at=lte.").append(to);
+        }
+        return page(supabaseAdminClient.list(path.toString(), offset, limit));
+    }
+
+    public JsonNode exportAuditLogs(AuthenticatedUser actor, String from, String to) {
+        requireOrg(actor);
+        String token = AuthTokens.bearer();
+        return supabaseAdminClient.exportAuditLogs(actor.organizationId(), from, to, token);
+    }
+
+    public int requestErasure(AuthenticatedUser actor, String email) {
+        requireOrg(actor);
+        if (email == null || email.isBlank()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Email is required", "validation");
+        }
+        String token = AuthTokens.bearer();
+        if (token == null) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+        return supabaseAdminClient.requestErasure(email, token);
+    }
+
     public PageResponse emails(AuthenticatedUser actor, int offset, int limit) {
         requireOrg(actor);
         String filter = actor.platformAdmin()

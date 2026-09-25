@@ -1,8 +1,8 @@
 <template>
   <section class="space-y-6">
-    <PageHeader title="Dashboard" description="Live metrics for your organization. Figures come from complaint records, not placeholders.">
+    <PageHeader title="Today’s work" description="What needs attention in this organization. Figures come from live complaint records.">
       <div class="flex flex-wrap gap-2">
-        <select v-model="preset" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+        <select v-model="preset" class="field-input w-auto">
           <option value="today">Today</option>
           <option value="week">This week</option>
           <option value="month">This month</option>
@@ -12,95 +12,77 @@
           <option value="custom">Custom range</option>
           <option value="all">All time</option>
         </select>
-        <input v-if="preset === 'custom'" v-model="customFrom" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" type="date" />
-        <input v-if="preset === 'custom'" v-model="customTo" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" type="date" />
-        <select v-model="departmentId" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+        <input v-if="preset === 'custom'" v-model="customFrom" class="field-input w-auto" type="date" />
+        <input v-if="preset === 'custom'" v-model="customTo" class="field-input w-auto" type="date" />
+        <select v-model="departmentId" class="field-input w-auto">
           <option value="">All departments</option>
           <option v-for="item in departments || []" :key="item.id" :value="item.id">{{ item.name }}</option>
         </select>
-        <select v-model="categoryId" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+        <select v-model="categoryId" class="field-input w-auto">
           <option value="">All categories</option>
           <option v-for="item in categories || []" :key="item.id" :value="item.id">{{ item.name }}</option>
-        </select>
-        <select v-model="priority" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
-          <option value="">All priorities</option>
-          <option v-for="option in PRIORITY_OPTIONS" :key="option.value" :value="option.value">{{ option.label }}</option>
-        </select>
-        <select v-model="status" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
-          <option value="">All statuses</option>
-          <option v-for="option in STATUS_OPTIONS" :key="option.value" :value="option.value">{{ option.label }}</option>
         </select>
       </div>
     </PageHeader>
     <LoadingSkeleton v-if="isLoading" />
     <ErrorState v-else-if="isError" :message="getErrorMessage(error)" />
     <template v-else>
-      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Total complaints" :value="metrics.total || 0" />
-        <StatCard label="Open" :value="metrics.open || 0" />
-        <StatCard label="Under investigation" :value="metrics.under_investigation || 0" />
-        <StatCard label="Resolved" :value="metrics.resolved || 0" />
-        <StatCard label="Closed" :value="metrics.closed || 0" />
-        <StatCard label="Overdue" :value="metrics.overdue || 0" />
-        <StatCard label="Escalated" :value="metrics.escalated || 0" />
-        <StatCard label="Avg resolution hours" :value="Number(metrics.avg_resolution_hours || 0).toFixed(1)" />
-        <StatCard label="Resolution rate" :value="`${metrics.resolution_rate || 0}%`" />
-        <StatCard label="SLA compliance" :value="`${metrics.sla_compliance || 0}%`" />
-        <StatCard label="Overdue rate" :value="`${metrics.overdue_rate || 0}%`" />
-        <StatCard label="Escalation rate" :value="`${metrics.escalation_rate || 0}%`" />
+      <div v-if="Number(metrics.overdue || 0) > 0" class="surface flex flex-wrap items-center justify-between gap-3 rounded-2xl p-4 ring-1 ring-[var(--danger)]/15">
+        <div>
+          <p class="font-display text-lg">{{ metrics.overdue }} case{{ Number(metrics.overdue) === 1 ? '' : 's' }} past SLA</p>
+          <p class="text-sm text-muted">Start with overdue and escalated work before opening new intake.</p>
+        </div>
+        <AppButton @click="$router.push({ path: '/complaints', query: { overdue: '1' } })">Review overdue</AppButton>
       </div>
-      <div class="grid gap-4 lg:grid-cols-2">
-        <div class="h-72 rounded-2xl border border-slate-200 bg-white p-4">
-          <h2 class="mb-3 font-semibold">Complaints over time</h2>
-          <SimpleChart
-            type="line"
-            :labels="(metrics.over_time || []).map((row) => row.date)"
-            :values="(metrics.over_time || []).map((row) => row.count)"
-          />
-        </div>
-        <div class="h-72 rounded-2xl border border-slate-200 bg-white p-4">
-          <h2 class="mb-3 font-semibold">Resolution trend</h2>
-          <SimpleChart
-            type="line"
-            :labels="(metrics.resolution_trend || []).map((row) => row.date)"
-            :values="(metrics.resolution_trend || []).map((row) => row.count)"
-          />
-        </div>
-        <div class="h-72 rounded-2xl border border-slate-200 bg-white p-4">
-          <h2 class="mb-3 font-semibold">By status</h2>
-          <SimpleChart
-            :labels="Object.keys(metrics.by_status || {})"
-            :values="Object.values(metrics.by_status || {})"
-          />
-        </div>
-        <div class="h-72 rounded-2xl border border-slate-200 bg-white p-4">
-          <h2 class="mb-3 font-semibold">By priority</h2>
-          <SimpleChart
-            :labels="Object.keys(metrics.by_priority || {})"
-            :values="Object.values(metrics.by_priority || {})"
-          />
-        </div>
-        <div class="h-72 rounded-2xl border border-slate-200 bg-white p-4">
-          <h2 class="mb-3 font-semibold">By category</h2>
-          <SimpleChart
-            :labels="(metrics.by_category || []).map((row) => row.name)"
-            :values="(metrics.by_category || []).map((row) => row.count)"
-          />
-        </div>
-        <div class="h-72 rounded-2xl border border-slate-200 bg-white p-4">
-          <h2 class="mb-3 font-semibold">By department</h2>
-          <SimpleChart
-            :labels="(metrics.by_department || []).map((row) => row.name)"
-            :values="(metrics.by_department || []).map((row) => row.count)"
-          />
-        </div>
-        <div class="h-72 rounded-2xl border border-slate-200 bg-white p-4">
-          <h2 class="mb-3 font-semibold">SLA compliance</h2>
-          <SimpleChart
-            :labels="['On time', 'Breached']"
-            :values="[Number(metrics.sla_compliance || 0), Math.max(0, 100 - Number(metrics.sla_compliance || 0))]"
-          />
-        </div>
+      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Open" :value="metrics.open || 0" hint="Still in the workflow" />
+        <StatCard label="Overdue" :value="metrics.overdue || 0" hint="Past the SLA due date" tone="alert" />
+        <StatCard label="SLA on time" :value="`${metrics.sla_compliance || 0}%`" />
+        <StatCard label="Avg resolution" :value="`${Number(metrics.avg_resolution_hours || 0).toFixed(1)}h`" />
+      </div>
+      <div class="grid gap-4 lg:grid-cols-3">
+        <article class="surface rounded-2xl p-4 lg:col-span-2">
+          <div class="mb-3 flex items-center justify-between">
+            <h2 class="font-display text-xl">Volume over time</h2>
+            <p class="text-xs text-muted">{{ metrics.total || 0 }} total in range</p>
+          </div>
+          <div class="h-72">
+            <SimpleChart
+              type="line"
+              :labels="(metrics.over_time || []).map((row) => row.date)"
+              :values="(metrics.over_time || []).map((row) => row.count)"
+            />
+          </div>
+        </article>
+        <article class="surface rounded-2xl p-4">
+          <h2 class="font-display text-xl">By status</h2>
+          <div class="mt-3 h-72">
+            <SimpleChart
+              :labels="Object.keys(metrics.by_status || {})"
+              :values="Object.values(metrics.by_status || {})"
+            />
+          </div>
+        </article>
+        <article class="surface rounded-2xl p-4">
+          <h2 class="font-display text-xl">By category</h2>
+          <div class="mt-3 h-64">
+            <SimpleChart
+              :labels="(metrics.by_category || []).map((row) => row.name)"
+              :values="(metrics.by_category || []).map((row) => row.count)"
+            />
+          </div>
+        </article>
+        <article class="surface rounded-2xl p-4 lg:col-span-2">
+          <h2 class="font-display text-xl">Secondary measures</h2>
+          <dl class="mt-4 grid gap-4 sm:grid-cols-3 text-sm">
+            <div><dt class="text-muted">Under investigation</dt><dd class="font-display text-2xl">{{ metrics.under_investigation || 0 }}</dd></div>
+            <div><dt class="text-muted">Escalated</dt><dd class="font-display text-2xl">{{ metrics.escalated || 0 }}</dd></div>
+            <div><dt class="text-muted">Resolved</dt><dd class="font-display text-2xl">{{ metrics.resolved || 0 }}</dd></div>
+            <div><dt class="text-muted">Closed</dt><dd class="font-display text-2xl">{{ metrics.closed || 0 }}</dd></div>
+            <div><dt class="text-muted">Resolution rate</dt><dd class="font-display text-2xl">{{ metrics.resolution_rate || 0 }}%</dd></div>
+            <div><dt class="text-muted">Escalation rate</dt><dd class="font-display text-2xl">{{ metrics.escalation_rate || 0 }}%</dd></div>
+          </dl>
+        </article>
       </div>
     </template>
   </section>
@@ -110,12 +92,12 @@
 import { computed, ref } from 'vue';
 import { useQuery } from '@tanstack/vue-query';
 import PageHeader from '@/components/common/PageHeader.vue';
+import AppButton from '@/components/common/AppButton.vue';
 import LoadingSkeleton from '@/components/common/LoadingSkeleton.vue';
 import ErrorState from '@/components/common/ErrorState.vue';
 import StatCard from '@/components/dashboard/StatCard.vue';
 import SimpleChart from '@/components/dashboard/SimpleChart.vue';
 import { fetchDashboard } from '@/services/complaint.service';
-import { PRIORITY_OPTIONS, STATUS_OPTIONS } from '@/lib/constants';
 import { dateRangePreset, getErrorMessage } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 
@@ -124,8 +106,6 @@ const customFrom = ref('');
 const customTo = ref('');
 const departmentId = ref('');
 const categoryId = ref('');
-const priority = ref('');
-const status = ref('');
 const range = computed(() => dateRangePreset(preset.value, customFrom.value, customTo.value));
 const { data: departments } = useQuery({
   queryKey: ['departments'],
@@ -144,13 +124,11 @@ const { data: categories } = useQuery({
   },
 });
 const { data, isLoading, isError, error } = useQuery({
-  queryKey: computed(() => ['dashboard', range.value, departmentId.value, categoryId.value, priority.value, status.value]),
+  queryKey: computed(() => ['dashboard', range.value, departmentId.value, categoryId.value]),
   queryFn: () => fetchDashboard({
     ...range.value,
     departmentId: departmentId.value || null,
     categoryId: categoryId.value || null,
-    priority: priority.value || null,
-    status: status.value || null,
   }),
 });
 const metrics = computed(() => data.value || {});

@@ -1,0 +1,29 @@
+name: Uptime
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ready:
+    if: ${{ secrets.READY_URL != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check API readiness
+        env:
+          READY_URL: ${{ secrets.READY_URL }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+        run: |
+          set -e
+          if [ -n "$READY_URL" ]; then
+            code=$(curl -sS -o /tmp/ready.json -w '%{http_code}' "$READY_URL")
+            echo "ready status $code"
+            cat /tmp/ready.json
+            test "$code" = "200"
+          fi
+          if [ -n "$SITE_URL" ]; then
+            code=$(curl -sS -o /dev/null -w '%{http_code}' "$SITE_URL/submit-complaint")
+            echo "submit page status $code"
+            test "$code" = "200"
+          fi

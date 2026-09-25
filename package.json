@@ -9,6 +9,8 @@
     "supabase:production": "node scripts/setup-production.mjs",
     "site:origin": "node scripts/set-site-origin.mjs",
     "test:isolation": "node scripts/test-isolation.mjs",
+    "supabase:staging": "node scripts/setup-staging.mjs",
+    "ops:restore-drill": "node scripts/restore-drill.mjs",
     "test": "npm --prefix frontend test && npm run test:isolation",
     "dev:frontend": "npm --prefix frontend run dev",
     "dev:backend": "node scripts/dev-backend.mjs"

@@ -1,9 +1,11 @@
 <template>
-  <div class="rounded-2xl border border-slate-200 bg-white px-8 py-12 text-center">
-    <component :is="icon" class="mx-auto mb-3 h-10 w-10 text-slate-400" />
-    <h3 class="text-lg font-semibold">{{ title }}</h3>
-    <p class="mt-1 text-sm text-slate-500">{{ message }}</p>
-    <div v-if="$slots.default" class="mt-4 flex justify-center">
+  <div class="surface rounded-2xl px-8 py-14 text-center">
+    <span class="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)]">
+      <component :is="icon" class="h-6 w-6" />
+    </span>
+    <h3 class="font-display text-xl">{{ title }}</h3>
+    <p class="mt-1 text-sm text-muted">{{ message }}</p>
+    <div v-if="$slots.default" class="mt-5 flex justify-center">
       <slot />
     </div>
   </div>

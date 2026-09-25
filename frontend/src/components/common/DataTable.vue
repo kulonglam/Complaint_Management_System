@@ -1,8 +1,8 @@
 <template>
-  <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+  <div class="surface overflow-hidden rounded-2xl">
     <div class="hidden overflow-x-auto md:block">
       <table class="min-w-full text-sm">
-        <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+        <thead class="bg-[var(--paper)] text-left text-xs uppercase tracking-wide text-muted">
           <tr>
             <th v-for="column in columns" :key="column.key" class="px-4 py-3">
               <button
@@ -23,7 +23,7 @@
             v-for="(row, index) in rows"
             :key="row.id || index"
             class="border-t"
-            :class="clickable ? 'cursor-pointer hover:bg-slate-50' : ''"
+            :class="clickable ? 'cursor-pointer hover:bg-[var(--paper)]' : ''"
             @click="clickable && $emit('row-click', row)"
           >
             <td v-for="column in columns" :key="column.key" class="px-4 py-3">

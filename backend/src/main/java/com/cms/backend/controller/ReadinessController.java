@@ -24,10 +24,12 @@ public class ReadinessController {
         boolean supabase = supabaseProperties.configured();
         boolean mail = appProperties.mailEnabled()
                 || (appProperties.resendApiKey() != null && !appProperties.resendApiKey().isBlank());
+        boolean sentry = System.getenv("SENTRY_DSN") != null && !System.getenv("SENTRY_DSN").isBlank();
         Map<String, Object> body = Map.of(
                 "ok", supabase,
                 "supabase", supabase,
                 "mail_delivery", mail,
+                "sentry", sentry,
                 "stripe", appProperties.stripeSecretKey() != null && !appProperties.stripeSecretKey().isBlank()
         );
         return ResponseEntity.status(supabase ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE).body(body);

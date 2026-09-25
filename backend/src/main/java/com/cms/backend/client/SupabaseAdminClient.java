@@ -219,10 +219,20 @@ public class SupabaseAdminClient {
     }
 
     public JsonNode pendingEmails() {
-        return query("/rest/v1/email_outbox?status=eq.PENDING&select=*&order=created_at.asc&limit=25");
+        JsonNode rows = call(() -> restClient.post()
+                .uri("/rest/v1/rpc/list_pending_emails")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("p_limit", 25))
+                .retrieve()
+                .body(JsonNode.class));
+        return rows == null ? objectMapper.createArrayNode() : rows;
     }
 
     public void markEmail(UUID id, String status, String errorMessage) {
+        markEmail(id, status, errorMessage, null);
+    }
+
+    public void markEmail(UUID id, String status, String errorMessage, Integer attemptCount) {
         Map<String, Object> body = new HashMap<>();
         body.put("status", status);
         if ("SENT".equals(status)) {
@@ -231,12 +241,60 @@ public class SupabaseAdminClient {
         if (errorMessage != null) {
             body.put("error_message", errorMessage);
         }
+        if (attemptCount != null) {
+            body.put("attempt_count", attemptCount);
+            if ("PENDING".equals(status)) {
+                int minutes = (int) Math.min(60, Math.pow(2, Math.min(attemptCount, 6)));
+                body.put("next_attempt_at", java.time.OffsetDateTime.now().plusMinutes(minutes).toString());
+            }
+        }
         call(() -> restClient.patch()
                 .uri("/rest/v1/email_outbox?id=eq." + id)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body)
                 .retrieve()
                 .toBodilessEntity());
+    }
+
+    public int purgeExpiredRecords() {
+        JsonNode result = call(() -> restClient.post()
+                .uri("/rest/v1/rpc/purge_expired_records")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of())
+                .retrieve()
+                .body(JsonNode.class));
+        if (result == null || result.isNull() || !result.isNumber()) {
+            return 0;
+        }
+        return result.intValue();
+    }
+
+    public JsonNode exportAuditLogs(UUID organizationId, String from, String to, String accessToken) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("p_from", from);
+        body.put("p_to", to);
+        if (accessToken != null && !accessToken.isBlank()) {
+            return userPost(accessToken, "/rest/v1/rpc/export_audit_logs", body);
+        }
+        StringBuilder path = new StringBuilder("/rest/v1/audit_logs?select=id,created_at,action,entity_type,entity_id,user_id,old_values,new_values,metadata&order=created_at.desc");
+        if (organizationId != null) {
+            path.append("&organization_id=eq.").append(organizationId);
+        }
+        if (from != null && !from.isBlank()) {
+            path.append("&created_at=gte.").append(encode(from));
+        }
+        if (to != null && !to.isBlank()) {
+            path.append("&created_at=lte.").append(encode(to));
+        }
+        return query(path + "&limit=10000");
+    }
+
+    public int requestErasure(String email, String accessToken) {
+        JsonNode result = userPost(accessToken, "/rest/v1/rpc/request_subject_erasure", Map.of("p_email", email));
+        if (result == null || result.isNull() || !result.isNumber()) {
+            return 0;
+        }
+        return result.intValue();
     }
 
     public void enqueueEmail(UUID organizationId, String to, String template, Map<String, Object> payload) {

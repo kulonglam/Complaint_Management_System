@@ -1,9 +1,9 @@
 <template>
   <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
     <div>
-      <p v-if="eyebrow" class="text-sm font-medium text-blue-700">{{ eyebrow }}</p>
-      <h1 class="text-2xl font-semibold tracking-tight">{{ title }}</h1>
-      <p v-if="description" class="mt-1 max-w-2xl text-sm text-slate-500">{{ description }}</p>
+      <p v-if="eyebrow" class="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">{{ eyebrow }}</p>
+      <h1 class="font-display text-3xl font-semibold tracking-tight text-ink">{{ title }}</h1>
+      <p v-if="description" class="mt-1.5 max-w-2xl text-sm leading-6 text-muted">{{ description }}</p>
     </div>
     <div class="flex flex-wrap gap-2">
       <slot />

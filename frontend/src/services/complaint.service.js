@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { ALLOWED_FILE_TYPES, MAX_FILE_SIZE } from '@/lib/constants';
+import { assertSafeUpload } from '@/lib/uploads';
 
 export async function fetchComplaints({
   page = 1,
@@ -87,12 +87,7 @@ export async function submitPublicFeedback(reference, trackingCode, rating, comm
 export async function uploadPublicFiles(files) {
   const uploaded = [];
   for (const file of files) {
-    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-      throw new Error(`${file.name} is not an allowed file type.`);
-    }
-    if (file.size > MAX_FILE_SIZE) {
-      throw new Error(`${file.name} must be 10MB or smaller.`);
-    }
+    assertSafeUpload(file);
     const path = `public-inbox/${crypto.randomUUID()}-${file.name}`;
     const { error } = await supabase.storage.from('complaint-attachments').upload(path, file);
     if (error) throw error;

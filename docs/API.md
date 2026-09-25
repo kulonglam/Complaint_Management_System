@@ -22,7 +22,11 @@ Spring validates the token as an OIDC resource server (JWKS at `{SUPABASE_URL}/a
 | `PATCH` | `/api/v1/complaints/{id}` | status transition |
 | `GET` | `/api/v1/organizations` | platform admin |
 | `GET` | `/api/v1/emails` | `settings:view` |
+| `GET` | `/api/v1/audit-logs` | `audit_logs:view` |
+| `GET` | `/api/v1/audit-logs/export` | `audit_logs:view` / `reports:export` |
+| `POST` | `/api/v1/privacy/erasure` | `settings:update` |
 | `POST` | `/api/v1/jobs/sla` | `x-job-key` |
+| `POST` | `/api/v1/jobs/retention` | `x-job-key` |
 
 Collection responses use `{ "data": [...], "page": { "offset", "limit", "total" } }`.
 Errors use `{ "message", "code", "status" }`.
@@ -54,5 +58,8 @@ Still used by the Vue app and some Spring writes:
 - `search_complaints`
 - `complaint_timeline`
 - `organization_usage`
+- `export_audit_logs`
+- `request_subject_erasure`
+- `purge_expired_records`
 
-`/api/**` is rate limited. Email is stored in `email_outbox` and delivered when Resend or SMTP is configured.
+`/api/**` is rate limited. Privileged admin calls (except `/api/v1/me`) require JWT `aal=aal2`. Email is stored in `email_outbox` and retried with backoff until sent or marked `FAILED` after 8 attempts. Every response includes `X-Request-Id`.

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { createAuthState } from '@/composables/useAuth';
+import { adminMfaRequired, mfaRedirect, readMfaGate } from '@/lib/mfa';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import AppShell from '@/layouts/AppShell.vue';
 
@@ -75,6 +76,10 @@ router.beforeEach(async (to) => {
   }
   if (to.meta.permission && !auth.can(to.meta.permission)) {
     return '/dashboard';
+  }
+  if (to.meta.requiresAuth && adminMfaRequired(auth.state.settings, auth.state.roles)) {
+    const redirect = mfaRedirect(await readMfaGate(), to.name);
+    if (redirect) return redirect;
   }
   return true;
 });

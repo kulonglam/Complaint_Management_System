@@ -4,6 +4,7 @@ import App from './App.vue';
 import router from './router';
 import { createAuthState } from './composables/useAuth';
 import { createToastState } from './composables/useToast';
+import { initObservability } from './lib/observability';
 import './assets/styles.css';
 
 createAuthState();
@@ -19,6 +20,7 @@ const queryClient = new QueryClient({
 });
 
 const app = createApp(App);
+initObservability(app, router);
 app.use(VueQueryPlugin, { queryClient });
 app.use(router);
 app.mount('#app');

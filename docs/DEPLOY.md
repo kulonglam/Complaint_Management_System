@@ -33,7 +33,11 @@ The Render blueprint reads `origin`. Commit and push the deploy files first if t
 
 4. Deploy. Open `https://<cms-api>.onrender.com/ready`. You want `{ "ok": true, "supabase": true }`.
 
-Free Render services sleep after idle. The first request can take ~30s.
+Free Render services sleep after idle. The first request can take ~30s. For anything you call production, use a paid always-on instance and a custom domain.
+
+Optional: set `SENTRY_DSN` on cms-api and `VITE_SENTRY_DSN` on cms-web (rebuild the static site after adding it). Set GitHub secrets `READY_URL` and `SITE_URL` so `.github/workflows/uptime.yml` can ping `/ready` and `/submit-complaint`.
+
+Supabase Auth invites still use Auth SMTP. Point Auth → SMTP at the same verified domain you use for Resend.
 
 ## 3. Frontend on Render
 

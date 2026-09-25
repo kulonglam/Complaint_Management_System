@@ -1,7 +1,7 @@
 <template>
   <section class="space-y-6">
     <PageHeader title="Organization settings" />
-    <form class="max-w-xl space-y-4 rounded-2xl border bg-white p-6" @submit.prevent="save">
+    <form class="surface max-w-xl space-y-4 rounded-3xl p-6" @submit.prevent="save">
       <div v-if="logoUrl" class="flex items-center gap-3">
         <img :src="logoUrl" alt="Organization logo" class="h-14 w-14 rounded-lg object-contain border" />
         <p class="text-sm text-slate-500">Current logo</p>
@@ -25,9 +25,19 @@
       <label class="flex items-center gap-2 text-sm">
         <input v-model="requireApproval" type="checkbox" /> Require resolution approval
       </label>
-      <FormField v-model="retentionDays" label="Retention days" />
+      <label class="flex items-center gap-2 text-sm">
+        <input v-model="requireAdminMfa" type="checkbox" /> Require 2FA for administrators
+      </label>
+      <FormField v-model="retentionDays" label="Retention days (redact closed complainant details)" />
       <FormField v-model="emailSender" label="Email sender name" />
       <AppButton type="submit" :disabled="!auth.can('settings:update')">Save settings</AppButton>
+    </form>
+
+    <form class="surface max-w-xl space-y-4 rounded-3xl p-6" @submit.prevent="eraseSubject">
+      <h2 class="font-semibold">Subject erasure</h2>
+      <p class="text-sm text-slate-500">Redact name, email, and phone on complaints that match this complainant email. The complaint record stays for operations.</p>
+      <FormField v-model="erasureEmail" label="Complainant email" type="email" />
+      <AppButton type="submit" variant="danger" :disabled="!auth.can('settings:update')" :loading="erasing">Redact personal data</AppButton>
     </form>
   </section>
 </template>
@@ -54,8 +64,11 @@ const primaryColor = ref('');
 const publicPortal = ref(true);
 const allowAnonymous = ref(true);
 const requireApproval = ref(true);
+const requireAdminMfa = ref(true);
 const retentionDays = ref('');
 const emailSender = ref('');
+const erasureEmail = ref('');
+const erasing = ref(false);
 const logoUrl = ref('');
 const emailError = computed(() => (email.value && !isValidEmail(email.value) ? 'Enter a valid email address.' : ''));
 const phoneError = computed(() => (phone.value && !isValidPhone(phone.value) ? 'Enter a valid phone number.' : ''));
@@ -85,6 +98,7 @@ watch(
     if (extra) {
       allowAnonymous.value = extra.allow_anonymous !== false;
       requireApproval.value = extra.require_resolution_approval !== false;
+      requireAdminMfa.value = extra.require_admin_mfa !== false;
       retentionDays.value = extra.retention_days ? String(extra.retention_days) : '';
       emailSender.value = extra.email_sender_name || '';
     }
@@ -124,11 +138,27 @@ async function save() {
     organization_id: orgId,
     allow_anonymous: allowAnonymous.value,
     require_resolution_approval: requireApproval.value,
+    require_admin_mfa: requireAdminMfa.value,
     retention_days: retentionDays.value ? Number(retentionDays.value) : null,
     email_sender_name: emailSender.value || null,
   });
   if (settingsError) return toast.error(getErrorMessage(settingsError));
   toast.success('Settings saved');
   auth.refresh();
+}
+
+async function eraseSubject() {
+  if (!erasureEmail.value) return toast.error('Enter the complainant email to redact.');
+  erasing.value = true;
+  try {
+    const { data, error } = await supabase.rpc('request_subject_erasure', { p_email: erasureEmail.value });
+    if (error) throw error;
+    toast.success(`Redacted ${data || 0} complaint record(s).`);
+    erasureEmail.value = '';
+  } catch (err) {
+    toast.error(getErrorMessage(err, 'Unable to complete the erasure request.'));
+  } finally {
+    erasing.value = false;
+  }
 }
 </script>

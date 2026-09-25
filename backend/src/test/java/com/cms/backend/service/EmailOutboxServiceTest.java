@@ -50,9 +50,31 @@ class EmailOutboxServiceTest {
 
         verify(emailService).deliver(eq("complaint-received"), eq("one@example.com"), any(Map.class));
         verify(emailService).deliver(eq("user-invited"), eq("two@example.com"), any(Map.class));
-        verify(supabaseAdminClient).markEmail(eq(first), eq("PENDING"), eq("Waiting for SMTP or RESEND_API_KEY"));
-        verify(supabaseAdminClient).markEmail(eq(second), eq("SENT"), isNull());
-        verify(supabaseAdminClient, times(2)).markEmail(any(UUID.class), any(), any());
+        verify(supabaseAdminClient).markEmail(eq(first), eq("PENDING"), eq("Waiting for SMTP or RESEND_API_KEY"), eq(1));
+        verify(supabaseAdminClient).markEmail(eq(second), eq("SENT"), isNull(), eq(1));
+        verify(supabaseAdminClient, times(2)).markEmail(any(UUID.class), any(), any(), any());
+    }
+
+    @Test
+    void processOutboxMarksFailedAfterEightAttempts() {
+        UUID first = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        ObjectMapper mapper = new ObjectMapper();
+        ArrayNode rows = mapper.createArrayNode();
+        ObjectNode row = pendingRow(mapper, first, "complaint-received", "one@example.com");
+        row.put("attempt_count", 7);
+        rows.add(row);
+
+        when(supabaseAdminClient.pendingEmails()).thenReturn(rows);
+        when(emailService.deliver(eq("complaint-received"), eq("one@example.com"), any(Map.class))).thenReturn(false);
+
+        EmailOutboxService service = new EmailOutboxService(
+                supabaseAdminClient,
+                new SupabaseProperties("https://example.supabase.co", "service-role", ""),
+                emailService
+        );
+        service.processOutbox();
+
+        verify(supabaseAdminClient).markEmail(eq(first), eq("FAILED"), eq("Gave up after 8 delivery attempts"), eq(8));
     }
 
     private static ObjectNode pendingRow(ObjectMapper mapper, UUID id, String template, String to) {

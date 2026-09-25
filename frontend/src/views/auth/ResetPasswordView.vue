@@ -1,7 +1,7 @@
 <template>
   <div class="mx-auto max-w-md px-4 py-16">
-    <form class="rounded-2xl border border-slate-200 bg-white p-6" @submit.prevent="onSubmit">
-      <h1 class="text-2xl font-semibold">Choose a new password</h1>
+    <form class="surface rounded-3xl p-7" @submit.prevent="onSubmit">
+      <h1 class="font-display text-2xl">Choose a new password</h1>
       <div class="mt-6 grid gap-4">
         <FormField v-model="password" label="New password" type="password" required />
       </div>

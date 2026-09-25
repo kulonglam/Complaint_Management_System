@@ -1,6 +1,8 @@
 package com.cms.backend.config;
 
+import com.cms.backend.security.AdminMfaFilter;
 import com.cms.backend.security.CmsJwtAuthenticationConverter;
+import com.cms.backend.security.CorrelationIdFilter;
 import com.cms.backend.security.JobKeyAuthenticationFilter;
 import com.cms.backend.security.JsonAccessDeniedHandler;
 import com.cms.backend.security.JsonAuthenticationEntryPoint;
@@ -31,6 +33,8 @@ public class SecurityConfig {
     private final AppProperties appProperties;
     private final RateLimitFilter rateLimitFilter;
     private final JobKeyAuthenticationFilter jobKeyAuthenticationFilter;
+    private final AdminMfaFilter adminMfaFilter;
+    private final CorrelationIdFilter correlationIdFilter;
     private final CmsJwtAuthenticationConverter jwtAuthenticationConverter;
     private final JsonAuthenticationEntryPoint authenticationEntryPoint;
     private final JsonAccessDeniedHandler accessDeniedHandler;
@@ -39,6 +43,8 @@ public class SecurityConfig {
             AppProperties appProperties,
             RateLimitFilter rateLimitFilter,
             JobKeyAuthenticationFilter jobKeyAuthenticationFilter,
+            AdminMfaFilter adminMfaFilter,
+            CorrelationIdFilter correlationIdFilter,
             CmsJwtAuthenticationConverter jwtAuthenticationConverter,
             JsonAuthenticationEntryPoint authenticationEntryPoint,
             JsonAccessDeniedHandler accessDeniedHandler
@@ -46,6 +52,8 @@ public class SecurityConfig {
         this.appProperties = appProperties;
         this.rateLimitFilter = rateLimitFilter;
         this.jobKeyAuthenticationFilter = jobKeyAuthenticationFilter;
+        this.adminMfaFilter = adminMfaFilter;
+        this.correlationIdFilter = correlationIdFilter;
         this.jwtAuthenticationConverter = jwtAuthenticationConverter;
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.accessDeniedHandler = accessDeniedHandler;
@@ -61,6 +69,20 @@ public class SecurityConfig {
     @Bean
     FilterRegistrationBean<JobKeyAuthenticationFilter> jobKeyFilterRegistration(JobKeyAuthenticationFilter filter) {
         FilterRegistrationBean<JobKeyAuthenticationFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
+    @Bean
+    FilterRegistrationBean<AdminMfaFilter> adminMfaFilterRegistration(AdminMfaFilter filter) {
+        FilterRegistrationBean<AdminMfaFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
+    @Bean
+    FilterRegistrationBean<CorrelationIdFilter> correlationIdFilterRegistration(CorrelationIdFilter filter) {
+        FilterRegistrationBean<CorrelationIdFilter> registration = new FilterRegistrationBean<>(filter);
         registration.setEnabled(false);
         return registration;
     }
@@ -88,8 +110,10 @@ public class SecurityConfig {
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
                         .authenticationEntryPoint(authenticationEntryPoint))
+                .addFilterBefore(correlationIdFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(jobKeyAuthenticationFilter, BearerTokenAuthenticationFilter.class);
+                .addFilterBefore(jobKeyAuthenticationFilter, BearerTokenAuthenticationFilter.class)
+                .addFilterAfter(adminMfaFilter, BearerTokenAuthenticationFilter.class);
         return http.build();
     }
 

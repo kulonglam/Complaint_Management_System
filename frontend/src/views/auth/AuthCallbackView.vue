@@ -7,6 +7,7 @@ import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/composables/useAuth';
+import { adminMfaRequired, readMfaGate } from '@/lib/mfa';
 
 const router = useRouter();
 const auth = useAuth();
@@ -14,6 +15,21 @@ const auth = useAuth();
 onMounted(async () => {
   await supabase.auth.getSession();
   await auth.refresh();
-  router.replace(auth.state.session ? '/dashboard' : '/login');
+  if (!auth.state.session) {
+    router.replace('/login');
+    return;
+  }
+  if (adminMfaRequired(auth.state.settings, auth.state.roles)) {
+    const gate = await readMfaGate();
+    if (!gate.enrolled) {
+      router.replace({ path: '/profile', query: { enrollMfa: '1' } });
+      return;
+    }
+    if (!gate.verified) {
+      router.replace({ path: '/profile', query: { verifyMfa: '1' } });
+      return;
+    }
+  }
+  router.replace('/dashboard');
 });
 </script>

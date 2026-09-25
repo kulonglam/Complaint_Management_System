@@ -48,12 +48,20 @@ public class EmailOutboxService {
                             row.path("to_email").asText(),
                             toMap(row.path("payload"))
                     );
-                    supabaseAdminClient.markEmail(id, delivered ? "SENT" : "PENDING", delivered ? null : "Waiting for SMTP or RESEND_API_KEY");
-                    if (!delivered) {
+                    int attempts = row.path("attempt_count").asInt(0) + 1;
+                    if (delivered) {
+                        supabaseAdminClient.markEmail(id, "SENT", null, attempts);
                         continue;
                     }
+                    String nextStatus = attempts >= 8 ? "FAILED" : "PENDING";
+                    String message = attempts >= 8
+                            ? "Gave up after 8 delivery attempts"
+                            : "Waiting for SMTP or RESEND_API_KEY";
+                    supabaseAdminClient.markEmail(id, nextStatus, message, attempts);
                 } catch (Exception ex) {
-                    supabaseAdminClient.markEmail(id, "FAILED", ex.getMessage());
+                    int attempts = row.path("attempt_count").asInt(0) + 1;
+                    String nextStatus = attempts >= 8 ? "FAILED" : "PENDING";
+                    supabaseAdminClient.markEmail(id, nextStatus, ex.getMessage(), attempts);
                     log.warn("email outbox failed id={}: {}", id, ex.getMessage());
                 }
             }

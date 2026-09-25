@@ -21,7 +21,7 @@ Fastest path for a live hosted project:
 2. Put `SUPABASE_ACCESS_TOKEN=sbp_...` in a root `.env`
 3. Run `npm run supabase:setup`
 
-That creates or reuses the project, applies migrations `00001`–`00006`, creates storage buckets, writes env files, and seeds demo data.
+That creates or reuses the project, applies migrations `00001`–`00010`, creates storage buckets, writes env files, and seeds demo data.
 
 Manual path:
 
@@ -87,7 +87,13 @@ Public tracking example: reference `CMP-2026-000001`, tracking code `DEMO-AA01`.
 
 Run `npm run test:isolation` against the live project to confirm it.
 
-See `docs/PRODUCTION.md` before calling the deployment production-ready. CI lives in `.github/workflows/ci.yml`.
+See `docs/PRODUCTION.md` before calling the deployment production-ready. Staging, restore, and incidents: `docs/STAGING.md`, `docs/RUNBOOKS.md`. CI lives in `.github/workflows/ci.yml`.
+
+```bash
+npm run supabase:staging
+npm run ops:restore-drill
+npm run test:isolation
+```
 
 ## Security model
 

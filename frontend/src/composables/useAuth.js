@@ -13,6 +13,7 @@ export function createAuthState() {
     session: null,
     profile: null,
     organization: null,
+    settings: null,
     roles: [],
     permissions: [],
   });
@@ -34,6 +35,7 @@ export function createAuthState() {
         session,
         profile: session ? state.profile : null,
         organization: session ? state.organization : null,
+        settings: session ? state.settings : null,
         roles: session ? state.roles : [],
         permissions: session ? state.permissions : [],
       });
@@ -54,6 +56,7 @@ export function createAuthState() {
       session: null,
       profile: null,
       organization: null,
+      settings: null,
       roles: [],
       permissions: [],
     });

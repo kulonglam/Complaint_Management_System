@@ -40,8 +40,8 @@ const chartData = computed(() => ({
     {
       label: props.label,
       data: props.values,
-      backgroundColor: '#2563eb',
-      borderColor: '#2563eb',
+      backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#0c6b5c',
+      borderColor: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#0c6b5c',
       borderRadius: 6,
       tension: 0.3,
     },

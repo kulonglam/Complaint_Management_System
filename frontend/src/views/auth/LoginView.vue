@@ -1,17 +1,22 @@
 <template>
-  <div class="mx-auto max-w-md px-4 py-16">
-    <form class="rounded-2xl border border-slate-200 bg-white p-6" @submit.prevent="onSubmit">
-      <h1 class="text-2xl font-semibold">Sign in</h1>
-      <p class="mt-1 text-sm text-slate-500">Staff and administrators only.</p>
+  <div class="mx-auto grid max-w-5xl items-center gap-10 px-4 py-12 lg:grid-cols-2 lg:py-20">
+    <div class="hidden lg:block">
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">Staff workspace</p>
+      <h1 class="mt-3 font-display text-4xl leading-tight">Sign in to continue a case, not to hunt for it.</h1>
+      <p class="mt-4 text-muted">Your organization, permissions, and assigned work load with the same record the public never sees.</p>
+    </div>
+    <form class="surface rounded-3xl p-7" @submit.prevent="onSubmit">
+      <h2 class="font-display text-2xl">Sign in</h2>
+      <p class="mt-1 text-sm text-muted">Staff and administrators only.</p>
       <div v-if="!mfa.needed" class="mt-6 grid gap-4">
         <FormField v-model="email" label="Email" type="email" required />
         <FormField v-model="password" label="Password" type="password" required />
       </div>
       <div v-else class="mt-6 grid gap-4">
-        <p class="text-sm text-slate-600">Enter the 6-digit code from your authenticator app.</p>
+        <p class="text-sm text-muted">Enter the 6-digit code from your authenticator app.</p>
         <FormField v-model="mfa.code" label="Authentication code" required />
       </div>
-      <p v-if="error" class="mt-3 text-sm text-red-600">{{ error }}</p>
+      <p v-if="error" class="mt-3 text-sm text-[var(--danger)]">{{ error }}</p>
       <AppButton class="mt-6 w-full" type="submit" :loading="loading">
         {{ mfa.needed ? 'Verify' : 'Continue' }}
       </AppButton>
@@ -19,7 +24,7 @@
         <AppButton variant="secondary" class="w-full" type="button" @click="oauth('google')">Continue with Google</AppButton>
         <AppButton variant="secondary" class="w-full" type="button" @click="oauth('github')">Continue with GitHub</AppButton>
       </div>
-      <router-link to="/forgot-password" class="mt-4 block text-center text-sm text-blue-700">Forgot password</router-link>
+      <router-link to="/forgot-password" class="mt-4 block text-center text-sm font-medium text-[var(--accent)]">Forgot password</router-link>
     </form>
   </div>
 </template>
@@ -31,6 +36,7 @@ import AppButton from '@/components/common/AppButton.vue';
 import FormField from '@/components/forms/FormField.vue';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/composables/useAuth';
+import { adminMfaRequired, readMfaGate } from '@/lib/mfa';
 import { getErrorMessage } from '@/lib/utils';
 
 const email = ref('');
@@ -44,6 +50,17 @@ const mfa = reactive({ needed: false, factorId: '', code: '' });
 
 async function finishLogin() {
   await auth.refresh();
+  if (adminMfaRequired(auth.state.settings, auth.state.roles)) {
+    const gate = await readMfaGate();
+    if (!gate.enrolled) {
+      router.push({ path: '/profile', query: { enrollMfa: '1' } });
+      return;
+    }
+    if (!gate.verified) {
+      router.push({ path: '/profile', query: { verifyMfa: '1' } });
+      return;
+    }
+  }
   router.push(route.query.redirect?.toString() || '/dashboard');
 }
 

@@ -1,8 +1,8 @@
 <template>
   <div class="mx-auto max-w-md px-4 py-16">
-    <form class="rounded-2xl border border-slate-200 bg-white p-6" @submit.prevent="onSubmit">
-      <h1 class="text-2xl font-semibold">Reset password</h1>
-      <p class="mt-2 text-sm text-slate-500">We will email a reset link if the account exists.</p>
+    <form class="surface rounded-3xl p-7" @submit.prevent="onSubmit">
+      <h1 class="font-display text-2xl">Reset password</h1>
+      <p class="mt-2 text-sm text-muted">We will email a reset link if the account exists.</p>
       <div class="mt-6 grid gap-4">
         <FormField v-model="email" label="Email" type="email" required />
       </div>

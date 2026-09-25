@@ -1,15 +1,22 @@
 <template>
   <div class="mx-auto max-w-3xl px-4 py-12">
-    <h1 class="text-3xl font-semibold">Submit a complaint</h1>
-    <p class="mt-2 text-slate-600">Provide as much detail as you can. You will receive a reference number and tracking code.</p>
+    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Public intake</p>
+    <h1 class="mt-2 font-display text-4xl">Submit a complaint</h1>
+    <p class="mt-2 text-muted">Tell us what happened. You will receive a reference number and a tracking code to keep.</p>
 
-    <form class="mt-8 space-y-6 rounded-2xl border border-slate-200 bg-white p-6" @submit.prevent="onSubmit">
-      <ol class="flex flex-wrap gap-2 text-xs font-semibold text-slate-500">
-        <li :class="step >= 1 ? 'text-blue-700' : ''">1. Complaint</li>
-        <li :class="step >= 2 ? 'text-blue-700' : ''">2. Contact</li>
-        <li :class="step >= 3 ? 'text-blue-700' : ''">3. Attachments</li>
-        <li :class="step >= 4 ? 'text-blue-700' : ''">4. Review</li>
+    <form class="surface relative mt-8 space-y-6 rounded-3xl p-6" @submit.prevent="onSubmit">
+      <ol class="grid grid-cols-4 gap-2 text-xs font-semibold">
+        <li v-for="(label, index) in steps" :key="label" class="flex items-center gap-2" :class="step > index ? 'text-[var(--accent)]' : 'text-muted'">
+          <span class="step-dot" :style="step > index ? { background: 'var(--accent)', color: '#fff' } : { background: 'var(--paper)', color: 'var(--muted)' }">{{ index + 1 }}</span>
+          <span class="hidden sm:inline">{{ label }}</span>
+        </li>
       </ol>
+
+      <div class="absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
+        <label>Company website
+          <input v-model="honeypot" tabindex="-1" autocomplete="off" />
+        </label>
+      </div>
 
       <div v-if="step === 1" class="grid gap-4">
         <FormField v-model="orgSlug" label="Organization" type="select" :options="orgOptions" required />
@@ -27,8 +34,8 @@
           <input v-model="form.is_anonymous" type="checkbox" class="mt-1" :disabled="!allowAnonymous" />
           Submit anonymously
         </label>
-        <p v-if="!allowAnonymous" class="text-sm text-slate-500">This organization does not accept anonymous complaints.</p>
-        <p v-if="form.is_anonymous" class="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+        <p v-if="!allowAnonymous" class="text-sm text-muted">This organization does not accept anonymous complaints.</p>
+        <p v-if="form.is_anonymous" class="rounded-xl bg-[#f8ead3] p-3 text-sm text-[var(--warn)]">
           Anonymous complaints may limit the organization's ability to follow up with you.
         </p>
         <template v-else>
@@ -42,8 +49,8 @@
         <label class="text-sm font-medium text-slate-700">Supporting documents
           <input class="mt-1 block w-full text-sm" type="file" multiple @change="onFiles" />
         </label>
-        <p class="text-xs text-slate-500">PDF, Word, Excel, JPG, or PNG. 10MB maximum per file.</p>
-        <ul class="text-xs text-slate-500">
+        <p class="text-xs text-muted">PDF, Word, Excel, JPG, or PNG. 10MB maximum per file.</p>
+        <ul class="text-xs text-muted">
           <li v-for="file in files" :key="file.name">{{ file.name }}</li>
         </ul>
       </div>
@@ -56,7 +63,7 @@
         <p class="whitespace-pre-wrap">{{ form.description }}</p>
       </div>
 
-      <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
+      <p v-if="error" class="text-sm text-[var(--danger)]">{{ error }}</p>
       <div class="flex justify-between">
         <AppButton v-if="step > 1" variant="secondary" @click="step -= 1">Back</AppButton>
         <AppButton v-if="step < 4" class="ml-auto" @click="nextStep">Continue</AppButton>
@@ -82,6 +89,8 @@ const loading = ref(false);
 const error = ref('');
 const orgSlug = ref('demo');
 const files = ref([]);
+const honeypot = ref('');
+const steps = ['Complaint', 'Contact', 'Files', 'Review'];
 const catalog = ref({ organizations: [], categories: [] });
 const form = reactive({
   title: '',
@@ -149,6 +158,10 @@ async function onSubmit() {
   error.value = '';
   loading.value = true;
   try {
+    if (honeypot.value) {
+      router.push({ path: '/complaint-submitted', query: { ref: 'CMP-HIDDEN', code: 'BOT' } });
+      return;
+    }
     const result = await submitPublicComplaint({
       p_org_slug: orgSlug.value,
       p_title: form.title,

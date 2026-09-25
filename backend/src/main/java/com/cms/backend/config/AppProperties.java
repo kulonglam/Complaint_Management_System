@@ -14,6 +14,8 @@ public record AppProperties(
         @DefaultValue("60") int rateLimitCapacity,
         @DefaultValue("60") int rateLimitWindowSeconds,
         @DefaultValue("") String resendApiKey,
-        @DefaultValue("") String stripeSecretKey
+        @DefaultValue("") String stripeSecretKey,
+        @DefaultValue("true") boolean retentionEnabled,
+        @DefaultValue("0 30 2 * * *") String retentionCron
 ) {
 }

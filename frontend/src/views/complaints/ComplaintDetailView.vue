@@ -8,14 +8,15 @@
     </PageHeader>
 
     <div class="flex flex-wrap gap-2">
+      <AppButton v-if="primaryAction" @click="primaryAction.run">{{ primaryAction.label }}</AppButton>
       <AppButton v-if="auth.can('complaints:assign')" variant="secondary" @click="assignOpen = true">Assign</AppButton>
       <AppButton v-if="auth.can('complaints:investigate')" variant="secondary" @click="$router.push(`/complaints/${complaint.id}/investigation`)">Investigation</AppButton>
       <AppButton v-if="auth.can('complaints:resolve')" variant="secondary" @click="$router.push(`/complaints/${complaint.id}/resolution`)">Resolution</AppButton>
       <AppButton v-if="auth.can('complaints:escalate')" variant="secondary" @click="escalateOpen = true">Escalate</AppButton>
       <AppButton
-        v-for="status in nextStatuses"
+        v-for="status in secondaryStatuses"
         :key="status"
-        variant="secondary"
+        variant="ghost"
         @click="askStatus(status)"
       >
         {{ STATUS_LABELS[status] }}
@@ -23,11 +24,11 @@
     </div>
 
     <div class="grid gap-4 lg:grid-cols-3">
-      <article class="rounded-2xl border border-slate-200 bg-white p-4 lg:col-span-2">
-        <h2 class="font-semibold">Summary</h2>
-        <p class="mt-3 whitespace-pre-wrap text-sm text-slate-700">{{ complaint.description }}</p>
+      <article class="surface rounded-2xl p-4 lg:col-span-2">
+        <h2 class="font-display text-xl">Summary</h2>
+        <p class="mt-3 whitespace-pre-wrap text-sm leading-6 text-ink">{{ complaint.description }}</p>
       </article>
-      <dl class="rounded-2xl border border-slate-200 bg-white p-4 text-sm">
+      <dl class="surface rounded-2xl p-4 text-sm">
         <div class="flex justify-between py-1"><dt>Complainant</dt><dd>{{ complaint.is_anonymous ? 'Anonymous' : (complaint.complainant_name || '—') }}</dd></div>
         <div class="flex justify-between py-1"><dt>Category</dt><dd>{{ complaint.category?.name || '—' }}</dd></div>
         <div class="flex justify-between py-1"><dt>Department</dt><dd>{{ complaint.department?.name || '—' }}</dd></div>
@@ -39,11 +40,29 @@
     </div>
 
     <div class="flex gap-2 overflow-x-auto text-sm">
-      <button v-for="item in tabs" :key="item" class="rounded-full px-3 py-1" :class="tab === item ? 'bg-slate-900 text-white' : 'bg-white border'" @click="tab = item">{{ item }}</button>
+      <button
+        v-for="item in tabs"
+        :key="item"
+        class="rounded-full px-3 py-1.5"
+        :class="tab === item ? 'text-white' : 'border border-[var(--line)] bg-[var(--surface)]'"
+        :style="tab === item ? { background: 'var(--ink)' } : undefined"
+        @click="tab = item"
+      >{{ item }}</button>
     </div>
 
-    <div class="rounded-2xl border border-slate-200 bg-white p-4">
-      <div v-if="tab === 'Overview'" class="text-sm text-slate-600">Use the tabs to review timeline, investigation, comments, files, resolution, and audit history.</div>
+    <div class="surface rounded-2xl p-4">
+      <div v-if="tab === 'Overview'" class="grid gap-6 lg:grid-cols-2">
+        <div>
+          <h3 class="font-display text-lg">Next step</h3>
+          <p class="mt-2 text-sm leading-6 text-muted">{{ nextStepCopy }}</p>
+          <AppButton v-if="primaryAction" class="mt-4" @click="primaryAction.run">{{ primaryAction.label }}</AppButton>
+        </div>
+        <div>
+          <h3 class="font-display text-lg">Recent activity</h3>
+          <ComplaintTimeline :events="recentEvents" />
+          <button class="mt-3 text-sm font-medium text-[var(--accent)]" type="button" @click="tab = 'Timeline'">Open full timeline</button>
+        </div>
+      </div>
       <ComplaintTimeline v-else-if="tab === 'Timeline'" :events="timelineEvents" />
       <div v-else-if="tab === 'Investigation'" class="space-y-3 text-sm">
         <article v-for="item in complaint.investigations || []" :key="item.id" class="rounded-xl border p-3">
@@ -54,7 +73,7 @@
       </div>
       <div v-else-if="tab === 'Comments'">
         <form class="mb-4 grid gap-2" @submit.prevent="addComment">
-          <textarea v-model="comment" class="rounded-lg border px-3 py-2 text-sm" rows="3" placeholder="Add a note" />
+          <textarea v-model="comment" class="field-input" rows="3" placeholder="Add a note" />
           <label class="text-sm"><input v-model="commentPublic" type="checkbox" /> Visible to complainant</label>
           <AppButton type="submit" :loading="savingComment">Add comment</AppButton>
         </form>
@@ -74,7 +93,7 @@
         </div>
         <ul class="space-y-2 text-sm">
           <li v-for="file in complaint.attachments || []" :key="file.id" class="flex items-center justify-between rounded-lg border px-3 py-2">
-            <button class="text-left text-blue-700" type="button" @click="openFile(file)">{{ file.file_name }} ({{ file.visibility }})</button>
+            <button class="text-left font-medium text-[var(--accent)]" type="button" @click="openFile(file)">{{ file.file_name }} ({{ file.visibility }})</button>
             <div class="flex gap-2">
               <button class="text-xs" type="button" @click="toggleVisibility(file)">{{ file.visibility === 'PUBLIC' ? 'Make internal' : 'Make public' }}</button>
               <button class="text-xs text-red-600" type="button" @click="removeFile(file)">Delete</button>
@@ -97,7 +116,7 @@
         <p v-for="item in complaint.feedback || []" :key="item.id">Rating {{ item.rating }}/5 — {{ item.comment }}</p>
         <EmptyState v-if="!(complaint.feedback || []).length" title="No feedback yet" />
       </div>
-      <div v-else class="text-sm text-slate-600">
+      <div v-else class="text-sm text-muted">
         Status changes, assignments, and investigation updates are recorded automatically in audit logs.
       </div>
     </div>
@@ -156,7 +175,7 @@
 
 <script setup>
 import { computed, reactive, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useQuery, useQueryClient } from '@tanstack/vue-query';
 import PageHeader from '@/components/common/PageHeader.vue';
 import AppButton from '@/components/common/AppButton.vue';
@@ -186,6 +205,7 @@ import { useToast } from '@/composables/useToast';
 import { supabase } from '@/lib/supabase';
 
 const route = useRoute();
+const router = useRouter();
 const auth = useAuth();
 const toast = useToast();
 const queryClient = useQueryClient();
@@ -244,6 +264,32 @@ const departmentOptions = computed(() =>
 
 const remaining = computed(() => remainingTime(complaint.value?.due_date));
 const nextStatuses = computed(() => ALLOWED_TRANSITIONS[complaint.value?.status] || []);
+const primaryStatus = computed(() => nextStatuses.value[0] || '');
+const secondaryStatuses = computed(() => nextStatuses.value.slice(1));
+const primaryAction = computed(() => {
+  const row = complaint.value;
+  if (!row) return null;
+  if (!row.assigned_to && auth.can('complaints:assign')) {
+    return { label: 'Assign this case', run: () => { assignOpen.value = true; } };
+  }
+  if (row.status === 'UNDER_INVESTIGATION' && auth.can('complaints:investigate')) {
+    return { label: 'Continue investigation', run: () => router.push(`/complaints/${row.id}/investigation`) };
+  }
+  if (['PENDING_ACTION', 'UNDER_INVESTIGATION'].includes(row.status) && auth.can('complaints:resolve')) {
+    return { label: 'Record resolution', run: () => router.push(`/complaints/${row.id}/resolution`) };
+  }
+  if (primaryStatus.value) {
+    return { label: `Move to ${STATUS_LABELS[primaryStatus.value]}`, run: () => askStatus(primaryStatus.value) };
+  }
+  return null;
+});
+const nextStepCopy = computed(() => {
+  if (!complaint.value?.assigned_to) return 'This case has no officer yet. Assign it so SLA time starts against a person.';
+  if (complaint.value.status === 'SUBMITTED') return 'Acknowledge the complaint so the complainant can see it is being handled.';
+  if (remaining.value.overdue) return 'The due date has passed. Update the status or escalate with a reason.';
+  return 'Review the latest activity, then take the next recorded status change.';
+});
+const recentEvents = computed(() => [...timelineEvents.value].slice(-3).reverse());
 const timelineEvents = computed(() => {
   if (timeline.value?.length) return timeline.value;
   return [...(complaint.value?.history || [])]

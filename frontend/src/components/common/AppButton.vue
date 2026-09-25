@@ -3,9 +3,10 @@
     :type="type"
     :disabled="disabled || loading"
     :class="classNames(
-      'inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60',
+      'inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60',
       variants[variant]
     )"
+    :style="variant === 'primary' ? { background: 'var(--accent)' } : undefined"
   >
     <span v-if="loading" class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
     <slot />
@@ -23,9 +24,9 @@ defineProps({
 });
 
 const variants = {
-  primary: 'bg-blue-600 text-white hover:bg-blue-700',
-  secondary: 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
-  danger: 'bg-red-600 text-white hover:bg-red-700',
-  ghost: 'text-slate-600 hover:bg-slate-100',
+  primary: 'text-white hover:brightness-95',
+  secondary: 'border border-[var(--line)] bg-[var(--surface)] text-ink hover:bg-[var(--paper)]',
+  danger: 'bg-[var(--danger)] text-white hover:brightness-95',
+  ghost: 'text-muted hover:bg-black/5 hover:text-ink',
 };
 </script>

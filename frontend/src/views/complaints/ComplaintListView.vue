@@ -93,12 +93,18 @@ const filters = reactive({
   assignedTo: '',
   from: '',
   to: '',
-  overdue: false,
+  overdue: route.query.overdue === '1',
   pageSize: 12,
   sort: 'created_at',
   ascending: false,
 });
 
+watch(() => route.query.q, (value) => {
+  if (value != null) filters.search = String(value);
+});
+watch(() => route.query.overdue, (value) => {
+  filters.overdue = value === '1';
+});
 watch(() => [filters.search, filters.status, filters.priority, filters.departmentId, filters.categoryId, filters.assignedTo, filters.from, filters.to, filters.overdue, filters.pageSize], () => {
   page.value = 1;
 });

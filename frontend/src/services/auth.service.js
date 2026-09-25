@@ -4,7 +4,9 @@ export async function fetchSessionContext() {
   const {
     data: { session },
   } = await supabase.auth.getSession();
-  if (!session?.user) return { session: null, profile: null, permissions: [], roles: [], organization: null };
+  if (!session?.user) {
+    return { session: null, profile: null, permissions: [], roles: [], organization: null, settings: null };
+  }
 
   const alreadyMarked = sessionStorage.getItem('cms-login-audited');
   if (!alreadyMarked) {
@@ -27,10 +29,21 @@ export async function fetchSessionContext() {
   const roles = (userRoles || []).map((row) => row.role).filter(Boolean);
   const permissions = [...new Set(roles.flatMap((role) => (role.role_permissions || []).map((item) => item.permission?.key).filter(Boolean)))];
 
+  let settings = null;
+  if (profile?.organization_id) {
+    const { data } = await supabase
+      .from('organization_settings')
+      .select('require_admin_mfa, retention_days, allow_anonymous')
+      .eq('organization_id', profile.organization_id)
+      .maybeSingle();
+    settings = data;
+  }
+
   return {
     session,
     profile,
     organization: profile?.organization || null,
+    settings,
     roles,
     permissions,
   };

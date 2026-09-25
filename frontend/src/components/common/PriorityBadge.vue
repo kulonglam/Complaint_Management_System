@@ -16,9 +16,9 @@ const props = defineProps({
 });
 
 const toneClass = computed(() => ({
-  LOW: 'bg-slate-100 text-slate-700',
-  MEDIUM: 'bg-blue-50 text-blue-700',
-  HIGH: 'bg-amber-50 text-amber-800',
-  CRITICAL: 'bg-red-50 text-red-700',
-}[props.value] || 'bg-slate-100 text-slate-700'));
+  LOW: 'bg-[#efe8dc] text-muted',
+  MEDIUM: 'bg-[var(--accent-soft)] text-[var(--accent)]',
+  HIGH: 'bg-[#f8ead3] text-[var(--warn)]',
+  CRITICAL: 'bg-[#f8e4e1] text-[var(--danger)]',
+}[props.value] || 'bg-[#efe8dc] text-ink'));
 </script>

@@ -25,6 +25,10 @@ public record AuthenticatedUser(
         return platformAdmin || permissions.contains(permission) || permissions.contains("*");
     }
 
+    public boolean privilegedAdmin() {
+        return platformAdmin || roles.contains("organization_administrator");
+    }
+
     public Collection<GrantedAuthority> authorities() {
         List<GrantedAuthority> granted = new ArrayList<>();
         granted.add(new SimpleGrantedAuthority("ROLE_USER"));

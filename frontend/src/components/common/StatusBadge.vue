@@ -16,21 +16,21 @@ const props = defineProps({
 });
 
 const map = {
-  SUBMITTED: { icon: CircleDot, class: 'bg-slate-100 text-slate-700' },
-  RECEIVED: { icon: CircleDot, class: 'bg-sky-50 text-sky-700' },
-  UNDER_REVIEW: { icon: CircleDot, class: 'bg-indigo-50 text-indigo-700' },
-  ASSIGNED: { icon: CircleDot, class: 'bg-blue-50 text-blue-700' },
-  UNDER_INVESTIGATION: { icon: AlertTriangle, class: 'bg-amber-50 text-amber-800' },
-  PENDING_ACTION: { icon: AlertTriangle, class: 'bg-orange-50 text-orange-800' },
-  RESOLVED: { icon: CheckCircle2, class: 'bg-emerald-50 text-emerald-800' },
-  CLOSED: { icon: CheckCircle2, class: 'bg-emerald-100 text-emerald-900' },
-  REJECTED: { icon: XCircle, class: 'bg-red-50 text-red-700' },
-  ESCALATED: { icon: AlertTriangle, class: 'bg-red-100 text-red-800' },
-  ON_HOLD: { icon: PauseCircle, class: 'bg-slate-200 text-slate-700' },
-  REOPENED: { icon: RotateCcw, class: 'bg-purple-50 text-purple-700' },
-  DUPLICATE: { icon: CircleDot, class: 'bg-slate-100 text-slate-600' },
+  SUBMITTED: { icon: CircleDot, class: 'bg-[#efe8dc] text-ink' },
+  RECEIVED: { icon: CircleDot, class: 'bg-[var(--accent-soft)] text-[var(--accent)]' },
+  UNDER_REVIEW: { icon: CircleDot, class: 'bg-[#e8e4f4] text-[#4338ca]' },
+  ASSIGNED: { icon: CircleDot, class: 'bg-[var(--accent-soft)] text-[var(--accent)]' },
+  UNDER_INVESTIGATION: { icon: AlertTriangle, class: 'bg-[#f8ead3] text-[var(--warn)]' },
+  PENDING_ACTION: { icon: AlertTriangle, class: 'bg-[#f6e0c8] text-[#9a4b12]' },
+  RESOLVED: { icon: CheckCircle2, class: 'bg-[#e3efe4] text-[var(--ok)]' },
+  CLOSED: { icon: CheckCircle2, class: 'bg-[#d7e8d9] text-[#2f5436]' },
+  REJECTED: { icon: XCircle, class: 'bg-[#f8e4e1] text-[var(--danger)]' },
+  ESCALATED: { icon: AlertTriangle, class: 'bg-[#f8e4e1] text-[var(--danger)]' },
+  ON_HOLD: { icon: PauseCircle, class: 'bg-[#efe8dc] text-muted' },
+  REOPENED: { icon: RotateCcw, class: 'bg-[#efe4f4] text-[#6b21a8]' },
+  DUPLICATE: { icon: CircleDot, class: 'bg-[#efe8dc] text-muted' },
 };
 
 const icon = computed(() => map[props.value]?.icon || CircleDot);
-const toneClass = computed(() => map[props.value]?.class || 'bg-slate-100 text-slate-700');
+const toneClass = computed(() => map[props.value]?.class || 'bg-[#efe8dc] text-ink');
 </script>

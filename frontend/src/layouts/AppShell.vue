@@ -151,6 +151,7 @@ const crumbs = {
   settings: 'Administration / Settings',
   billing: 'Administration / Billing',
   'billing-return': 'Administration / Billing',
+  'billing-sandbox': 'Administration / Billing',
   'email-log': 'Administration / Email log',
   'system-settings': 'Platform / System',
   organizations: 'Platform / Organizations',

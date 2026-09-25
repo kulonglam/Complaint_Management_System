@@ -100,6 +100,7 @@
 
 <script setup>
 import { computed, reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useQuery, useQueryClient } from '@tanstack/vue-query';
 import PageHeader from '@/components/common/PageHeader.vue';
 import AppButton from '@/components/common/AppButton.vue';
@@ -113,6 +114,7 @@ import { getErrorMessage } from '@/lib/utils';
 
 const auth = useAuth();
 const toast = useToast();
+const router = useRouter();
 const queryClient = useQueryClient();
 const assignOpen = ref(false);
 const saving = ref(false);
@@ -200,7 +202,11 @@ async function pay() {
       body: { plan_id: selectedPlan.value, payment_method: method.value, phone: phone.value },
     });
     payMessage.value = result.message;
-    if (result.demo) demoPaymentId.value = result.id;
+    if (result.demo) {
+      demoPaymentId.value = result.id;
+      await router.push({ path: '/billing/sandbox', query: { payment: result.id, method: method.value } });
+      return;
+    }
     if (result.checkout_url) {
       window.location.assign(result.checkout_url);
       return;

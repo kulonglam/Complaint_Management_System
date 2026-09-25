@@ -204,7 +204,7 @@ async function pay() {
     payMessage.value = result.message;
     if (result.demo) {
       demoPaymentId.value = result.id;
-      await router.push({ path: '/billing/sandbox', query: { payment: result.id, method: method.value } });
+      await router.push({ name: 'billing-sandbox', query: { payment: result.id, method: method.value } });
       return;
     }
     if (result.checkout_url) {

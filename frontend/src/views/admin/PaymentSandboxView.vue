@@ -70,7 +70,7 @@ async function approve() {
   try {
     await api(`/api/v1/payments/${route.query.payment}/demo-confirm`, { method: 'POST', body: {} });
     toast.success(`${title.value} approved. The plan is active.`);
-    await router.push('/billing');
+    await router.push({ name: 'billing' });
   } catch (err) {
     error.value = getErrorMessage(err, 'Unable to approve this local payment.');
   } finally {
@@ -80,6 +80,6 @@ async function approve() {
 
 async function decline() {
   toast.info('Payment declined. No plan change was made.');
-  await router.push('/billing');
+  await router.push({ name: 'billing' });
 }
 </script>

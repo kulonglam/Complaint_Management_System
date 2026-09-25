@@ -56,6 +56,16 @@
           </form>
         </div>
         <div class="ml-auto flex items-center gap-1">
+          <button class="hidden rounded-xl px-2 py-1 text-xs text-muted hover:bg-[var(--paper)] md:inline" type="button" aria-label="Open command palette" @click="openPalette">
+            ⌘K
+          </button>
+          <button class="rounded-xl p-2 hover:bg-[var(--paper)]" type="button" :aria-label="isDark ? 'Switch to light appearance' : 'Switch to dark appearance'" @click="theme.toggleAppearance()">
+            <Sun v-if="isDark" class="h-5 w-5" />
+            <Moon v-else class="h-5 w-5" />
+          </button>
+          <button class="rounded-xl p-2 text-xs font-semibold hover:bg-[var(--paper)]" type="button" @click="theme.setDensity(theme.state.density === 'compact' ? 'comfortable' : 'compact')">
+            {{ theme.state.density === 'compact' ? 'Cozy' : 'Compact' }}
+          </button>
           <router-link to="/notifications" class="relative rounded-xl p-2 hover:bg-[var(--paper)]" aria-label="Notifications">
             <Bell class="h-5 w-5" />
             <span
@@ -71,10 +81,11 @@
           </router-link>
         </div>
       </header>
-      <main class="p-4 lg:p-8">
+      <main id="main" class="p-4 lg:p-8">
         <router-view />
       </main>
     </div>
+    <CommandPalette :commands="commands" />
   </div>
 </template>
 
@@ -91,7 +102,9 @@ import {
   LayoutDashboard,
   Mail,
   Menu,
+  Moon,
   Plus,
+  Sun,
   ScrollText,
   Search,
   Settings,
@@ -104,11 +117,14 @@ import {
 } from 'lucide-vue-next';
 import AppButton from '@/components/common/AppButton.vue';
 import BrandMark from '@/components/common/BrandMark.vue';
+import CommandPalette from '@/components/common/CommandPalette.vue';
 import { useAuth } from '@/composables/useAuth';
 import { useNotifications } from '@/composables/useNotifications';
+import { useTheme } from '@/composables/useTheme';
 import { displayName } from '@/lib/utils';
 
 const auth = useAuth();
+const theme = useTheme();
 const notifications = useNotifications();
 const router = useRouter();
 const route = useRoute();
@@ -141,6 +157,11 @@ const crumbs = {
 };
 
 const crumb = computed(() => crumbs[route.name] || 'Workspace');
+const isDark = computed(() => theme.state.appearance === 'dark' || (theme.state.appearance === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches));
+
+function openPalette() {
+  window.dispatchEvent(new Event('cms-palette'));
+}
 
 const nav = computed(() => {
   const can = auth.can;
@@ -176,6 +197,19 @@ const nav = computed(() => {
     .map((group) => ({ ...group, items: group.items.filter((item) => item.show) }))
     .filter((group) => group.items.length);
 });
+
+const commands = computed(() => [
+  { id: 'search', label: 'Search complaints', hint: 'Cases', to: { path: '/complaints' } },
+  { id: 'overdue', label: 'Review overdue cases', hint: 'Cases', to: { path: '/complaints', query: { overdue: '1' } } },
+  ...nav.value.flatMap((group) => group.items.map((item) => ({
+    id: item.to,
+    label: item.label,
+    hint: group.label,
+    to: item.to,
+  }))),
+  { id: 'theme', label: 'Toggle dark mode', hint: 'Display', run: () => theme.toggleAppearance() },
+  { id: 'density', label: 'Toggle compact density', hint: 'Display', run: () => theme.setDensity(theme.state.density === 'compact' ? 'comfortable' : 'compact') },
+]);
 
 function goSearch() {
   router.push({ path: '/complaints', query: { q: search.value } });

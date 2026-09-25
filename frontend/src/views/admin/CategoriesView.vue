@@ -4,18 +4,18 @@
       <AppButton v-if="auth.can('categories:create')" @click="open = true">Add category</AppButton>
     </PageHeader>
     <div class="grid gap-4 md:grid-cols-2">
-      <article v-for="item in items || []" :key="item.id" class="rounded-2xl border bg-white p-4">
+      <article v-for="item in items || []" :key="item.id" class="surface rounded-2xl p-4">
         <div class="flex items-start justify-between gap-3">
           <div>
-            <h3 class="font-semibold">{{ item.name }}</h3>
-            <p class="text-xs text-slate-500">{{ item.status }}</p>
+            <h3 class="font-display text-xl">{{ item.name }}</h3>
+            <p class="text-xs text-muted">{{ item.status }}</p>
           </div>
           <div class="flex gap-2">
             <AppButton v-if="auth.can('categories:update')" variant="secondary" @click="toggle(item)">{{ item.status === 'ACTIVE' ? 'Disable' : 'Enable' }}</AppButton>
             <AppButton v-if="auth.can('categories:create')" variant="secondary" @click="addSub(item)">Add subcategory</AppButton>
           </div>
         </div>
-        <ul class="mt-2 list-disc pl-5 text-sm text-slate-600">
+        <ul class="mt-2 list-disc pl-5 text-sm text-muted">
           <li v-for="sub in item.complaint_subcategories" :key="sub.id">{{ sub.name }}</li>
         </ul>
       </article>

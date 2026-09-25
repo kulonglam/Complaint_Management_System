@@ -5,35 +5,35 @@
     </PageHeader>
 
     <div v-if="usage" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <article class="rounded-2xl border bg-white p-4">
-        <p class="text-sm text-slate-500">Plan</p>
-        <p class="mt-1 text-2xl font-semibold">{{ usage.plan?.name || 'None' }}</p>
+      <article class="surface rounded-2xl p-4">
+        <p class="text-sm text-muted">Plan</p>
+        <p class="mt-1 font-display text-2xl">{{ usage.plan?.name || 'None' }}</p>
       </article>
-      <article class="rounded-2xl border bg-white p-4">
-        <p class="text-sm text-slate-500">Users</p>
-        <p class="mt-1 text-2xl font-semibold">{{ usage.users }} / {{ usage.plan?.max_users ?? '∞' }}</p>
+      <article class="surface rounded-2xl p-4">
+        <p class="text-sm text-muted">Users</p>
+        <p class="mt-1 font-display text-2xl">{{ usage.users }} / {{ usage.plan?.max_users ?? '∞' }}</p>
       </article>
-      <article class="rounded-2xl border bg-white p-4">
-        <p class="text-sm text-slate-500">Complaints</p>
-        <p class="mt-1 text-2xl font-semibold">{{ usage.complaints }} / {{ usage.plan?.max_complaints ?? '∞' }}</p>
+      <article class="surface rounded-2xl p-4">
+        <p class="text-sm text-muted">Complaints</p>
+        <p class="mt-1 font-display text-2xl">{{ usage.complaints }} / {{ usage.plan?.max_complaints ?? '∞' }}</p>
       </article>
-      <article class="rounded-2xl border bg-white p-4">
-        <p class="text-sm text-slate-500">Price</p>
-        <p class="mt-1 text-2xl font-semibold">{{ priceLabel(usage.plan) }}</p>
+      <article class="surface rounded-2xl p-4">
+        <p class="text-sm text-muted">Price</p>
+        <p class="mt-1 font-display text-2xl">{{ priceLabel(usage.plan) }}</p>
       </article>
     </div>
 
     <div class="grid gap-4 md:grid-cols-3">
-      <article v-for="plan in plans || []" :key="plan.id" class="rounded-2xl border bg-white p-4">
-        <h3 class="font-semibold">{{ plan.name }}</h3>
-        <p class="text-sm text-slate-500">{{ priceLabel(plan) }}</p>
+      <article v-for="plan in plans || []" :key="plan.id" class="surface rounded-2xl p-4">
+        <h3 class="font-display text-xl">{{ plan.name }}</h3>
+        <p class="text-sm text-muted">{{ priceLabel(plan) }}</p>
         <p class="mt-2 text-sm">{{ plan.max_users ?? 'Unlimited' }} users · {{ plan.max_complaints ?? 'Unlimited' }} complaints</p>
       </article>
     </div>
 
-    <div v-if="auth.isPlatformAdmin.value" class="overflow-x-auto rounded-2xl border bg-white">
-      <table class="min-w-full text-sm">
-        <thead class="bg-slate-50 text-left text-xs uppercase text-slate-500">
+    <div v-if="auth.isPlatformAdmin.value" class="surface overflow-x-auto rounded-2xl">
+      <table class="cms-table">
+        <thead>
           <tr>
             <th class="px-4 py-3">Organization</th>
             <th class="px-4 py-3">Plan</th>

@@ -5,12 +5,12 @@
     </PageHeader>
     <EmptyState v-if="!items.length" title="No notifications" message="Assignment, SLA, and status events will appear here." />
     <ul v-else class="space-y-3">
-      <li v-for="item in items" :key="item.id" class="rounded-2xl border bg-white p-4" :class="item.read_at ? 'opacity-70' : ''">
+      <li v-for="item in items" :key="item.id" class="surface rounded-2xl p-4" :class="item.read_at ? 'opacity-70' : ''">
         <div class="flex items-start justify-between gap-3">
           <div>
             <p class="font-medium">{{ item.title }}</p>
-            <p class="text-sm text-slate-600">{{ item.message }}</p>
-            <router-link v-if="item.related_complaint_id" class="text-sm text-blue-700" :to="`/complaints/${item.related_complaint_id}`">Open complaint</router-link>
+            <p class="text-sm text-muted">{{ item.message }}</p>
+            <router-link v-if="item.related_complaint_id" class="text-sm font-semibold text-[var(--accent)]" :to="`/complaints/${item.related_complaint_id}`">Open complaint</router-link>
           </div>
           <AppButton v-if="!item.read_at" variant="secondary" @click="markRead(item.id)">Mark read</AppButton>
         </div>

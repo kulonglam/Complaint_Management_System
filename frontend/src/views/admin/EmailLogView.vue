@@ -5,10 +5,12 @@
     <EmptyState v-else-if="!(items || []).length" title="No emails yet" message="Complaint and invite emails will appear here after they are queued." />
     <DataTable v-else :columns="columns" :rows="items || []">
       <template #created_at="{ row }">{{ formatDate(row.created_at) }}</template>
-      <template #payload="{ row }">{{ JSON.stringify(row.payload || {}) }}</template>
+      <template #template="{ row }">{{ humanize(row.template) }}</template>
+      <template #payload="{ row }">{{ emailSummary(row) }}</template>
       <template #card="{ row }">
-        <p class="font-semibold">{{ row.template }} · {{ row.status }}</p>
-        <p class="text-sm text-slate-500">{{ row.to_email }}</p>
+        <p class="font-semibold">{{ humanize(row.template) }} · {{ row.status }}</p>
+        <p class="text-sm text-muted">{{ row.to_email }}</p>
+        <p class="mt-1 text-xs text-muted">{{ emailSummary(row) }}</p>
       </template>
     </DataTable>
   </section>
@@ -21,7 +23,19 @@ import LoadingSkeleton from '@/components/common/LoadingSkeleton.vue';
 import EmptyState from '@/components/common/EmptyState.vue';
 import DataTable from '@/components/common/DataTable.vue';
 import { supabase } from '@/lib/supabase';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatRecordSummary } from '@/lib/utils';
+
+function humanize(value) {
+  return String(value || '').replace(/[_-]+/g, ' ');
+}
+
+function emailSummary(row) {
+  const payload = row.payload || {};
+  if (payload.subject) return payload.subject;
+  if (payload.reference_number) return `Ref ${payload.reference_number}`;
+  if (row.error_message) return row.error_message;
+  return formatRecordSummary(payload);
+}
 
 const columns = [
   { key: 'created_at', label: 'When' },

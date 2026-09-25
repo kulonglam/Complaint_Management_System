@@ -1,7 +1,7 @@
 <template>
   <section class="space-y-6">
     <PageHeader title="Reports" description="Operational reports calculated from live complaint records.">
-      <select v-model="preset" class="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+      <select v-model="preset" class="field-input w-auto">
         <option value="30">Last 30 days</option>
         <option value="month">This month</option>
         <option value="quarter">This quarter</option>
@@ -23,45 +23,45 @@
       <StatCard label="SLA compliance" :value="`${metrics.sla_compliance || 0}%`" />
     </div>
     <div class="grid gap-4 lg:grid-cols-2">
-      <div class="rounded-2xl border bg-white p-4 text-sm">
-        <h2 class="font-semibold">Complaints by status</h2>
-        <ul class="mt-3 space-y-1">
-          <li v-for="(count, status) in metrics.by_status || {}" :key="status">{{ status }}: {{ count }}</li>
-        </ul>
+      <div class="surface rounded-2xl p-4 text-sm">
+        <h2 class="font-display text-xl">Complaints by status</h2>
+        <div class="mt-3 h-48">
+          <SimpleChart :labels="statusLabels" :values="statusValues" label="Cases" />
+        </div>
       </div>
-      <div class="rounded-2xl border bg-white p-4 text-sm">
-        <h2 class="font-semibold">Complaints by priority</h2>
-        <ul class="mt-3 space-y-1">
-          <li v-for="(count, priority) in metrics.by_priority || {}" :key="priority">{{ priority }}: {{ count }}</li>
-        </ul>
+      <div class="surface rounded-2xl p-4 text-sm">
+        <h2 class="font-display text-xl">Complaints by priority</h2>
+        <div class="mt-3 h-48">
+          <SimpleChart :labels="priorityLabels" :values="priorityValues" label="Cases" />
+        </div>
       </div>
-      <div class="rounded-2xl border bg-white p-4 text-sm">
-        <h2 class="font-semibold">Complaints by category</h2>
-        <ul class="mt-3 space-y-1">
+      <div class="surface rounded-2xl p-4 text-sm">
+        <h2 class="font-display text-xl">Complaints by category</h2>
+        <ul class="mt-3 space-y-1 text-muted">
           <li v-for="row in metrics.by_category || []" :key="row.name">{{ row.name }}: {{ row.count }}</li>
         </ul>
       </div>
-      <div class="rounded-2xl border bg-white p-4 text-sm">
-        <h2 class="font-semibold">Complaints by department</h2>
-        <ul class="mt-3 space-y-1">
+      <div class="surface rounded-2xl p-4 text-sm">
+        <h2 class="font-display text-xl">Complaints by department</h2>
+        <ul class="mt-3 space-y-1 text-muted">
           <li v-for="row in metrics.by_department || []" :key="row.name">{{ row.name }}: {{ row.count }}</li>
         </ul>
       </div>
-      <div class="rounded-2xl border bg-white p-4 text-sm">
-        <h2 class="font-semibold">Aging (open cases)</h2>
-        <ul class="mt-3 space-y-1">
+      <div class="surface rounded-2xl p-4 text-sm">
+        <h2 class="font-display text-xl">Aging (open cases)</h2>
+        <ul class="mt-3 space-y-1 text-muted">
           <li v-for="(count, bucket) in extraSafe.aging || {}" :key="bucket">{{ bucket }}: {{ count }}</li>
         </ul>
       </div>
-      <div class="rounded-2xl border bg-white p-4 text-sm">
-        <h2 class="font-semibold">Monthly trends</h2>
-        <ul class="mt-3 space-y-1">
-          <li v-for="row in extraSafe.monthly_trends || []" :key="row.month">{{ row.month }}: {{ row.count }}</li>
-        </ul>
+      <div class="surface rounded-2xl p-4 text-sm">
+        <h2 class="font-display text-xl">Monthly trends</h2>
+        <div class="mt-3 h-48">
+          <SimpleChart type="line" :labels="monthLabels" :values="monthValues" label="Cases" />
+        </div>
       </div>
-      <div class="rounded-2xl border bg-white p-4 text-sm lg:col-span-2">
-        <h2 class="font-semibold">Officer workload</h2>
-        <ul class="mt-3 space-y-1">
+      <div class="surface rounded-2xl p-4 text-sm lg:col-span-2">
+        <h2 class="font-display text-xl">Officer workload</h2>
+        <ul class="mt-3 space-y-1 text-muted">
           <li v-for="row in extraSafe.by_assignee || []" :key="row.name">{{ row.name }}: {{ row.open }} open</li>
         </ul>
       </div>
@@ -75,6 +75,7 @@ import { useQuery } from '@tanstack/vue-query';
 import PageHeader from '@/components/common/PageHeader.vue';
 import AppButton from '@/components/common/AppButton.vue';
 import StatCard from '@/components/dashboard/StatCard.vue';
+import SimpleChart from '@/components/dashboard/SimpleChart.vue';
 import { fetchComplaints, fetchDashboard, fetchReports } from '@/services/complaint.service';
 import { dateRangePreset, downloadText, toCsv } from '@/lib/utils';
 import { useAuth } from '@/composables/useAuth';
@@ -91,6 +92,12 @@ const { data: extra } = useQuery({
   queryFn: () => fetchReports(range.value),
 });
 const extraSafe = computed(() => extra.value || {});
+const statusLabels = computed(() => Object.keys(metrics.value?.by_status || {}));
+const statusValues = computed(() => Object.values(metrics.value?.by_status || {}));
+const priorityLabels = computed(() => Object.keys(metrics.value?.by_priority || {}));
+const priorityValues = computed(() => Object.values(metrics.value?.by_priority || {}));
+const monthLabels = computed(() => (extraSafe.value.monthly_trends || []).map((row) => row.month));
+const monthValues = computed(() => (extraSafe.value.monthly_trends || []).map((row) => row.count));
 
 async function exportCsv() {
   const { items } = await fetchComplaints({ page: 1, pageSize: 500, from: range.value.from, to: range.value.to });

@@ -26,8 +26,28 @@
   --danger: #9f2a1f;
   --warn: #9a5809;
   --ok: #3d6b46;
+  --field: #ffffff;
   --shadow: 0 1px 0 rgba(28, 25, 21, 0.04), 0 18px 40px -24px rgba(28, 25, 21, 0.28);
   color-scheme: light;
+}
+
+html.dark {
+  --paper: #14110e;
+  --surface: #1e1a16;
+  --ink: #f3eee4;
+  --muted: #b7ad9f;
+  --line: #3a332b;
+  --accent-soft: color-mix(in srgb, var(--accent) 22%, #1e1a16);
+  --sidebar: #0c0a08;
+  --field: #161310;
+  --shadow: 0 0 0 1px rgba(255, 253, 248, 0.03);
+  --color-paper: #14110e;
+  --color-surface: #1e1a16;
+  --color-ink: #f3eee4;
+  --color-muted: #b7ad9f;
+  --color-line: #3a332b;
+  --color-sidebar: #0c0a08;
+  color-scheme: dark;
 }
 
 html,
@@ -56,7 +76,7 @@ body {
   width: 100%;
   border-radius: 0.75rem;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--field);
   padding: 0.6rem 0.85rem;
   font-size: 0.9375rem;
   color: var(--ink);
@@ -69,6 +89,49 @@ body {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
+.cms-table {
+  width: 100%;
+  font-size: 0.875rem;
+}
+
+.cms-table thead {
+  background: var(--paper);
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cms-table th,
+.cms-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+.cms-table tbody tr {
+  border-top: 1px solid var(--line);
+}
+
+html.compact .field-input {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.875rem;
+}
+
+html.compact .cms-table th,
+html.compact .cms-table td,
+html.compact main {
+  --compact-pad: 0.45rem;
+}
+
+html.compact .cms-table th,
+html.compact .cms-table td {
+  padding: 0.45rem 0.75rem;
+}
+
+html.compact main {
+  padding-top: 1rem;
+}
+
 .step-dot {
   height: 1.5rem;
   width: 1.5rem;
@@ -77,6 +140,28 @@ body {
   place-items: center;
   font-size: 0.7rem;
   font-weight: 700;
+}
+
+.chip {
+  border-radius: 999px;
+  background: var(--paper);
+  padding: 0.15rem 0.55rem;
+  font-size: 0.75rem;
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -3rem;
+  z-index: 90;
+  border-radius: 0.75rem;
+  background: var(--ink);
+  color: var(--surface);
+  padding: 0.5rem 0.85rem;
+}
+
+.skip-link:focus {
+  top: 1rem;
 }
 
 button:focus-visible,

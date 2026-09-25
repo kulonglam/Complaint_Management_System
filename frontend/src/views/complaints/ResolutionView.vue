@@ -1,15 +1,15 @@
 <template>
   <section class="space-y-6">
     <PageHeader title="Resolution" description="Recommend a resolution. Supervisors with approval permission can accept or reject it." />
-    <form class="max-w-3xl space-y-4 rounded-2xl border border-slate-200 bg-white p-6" @submit.prevent="save">
+    <form class="surface max-w-3xl space-y-4 rounded-3xl p-6" @submit.prevent="save">
       <FormField v-model="summary" label="Resolution summary" type="textarea" required />
       <FormField v-model="corrective" label="Corrective action" type="textarea" />
       <FormField v-model="notes" label="Notes" type="textarea" />
-      <p class="text-sm text-slate-500">Saving submits the resolution for review. Approval is a separate action.</p>
+      <p class="text-sm text-muted">Saving submits the resolution for review. Approval is a separate action.</p>
       <AppButton type="submit" :loading="loading">Submit for review</AppButton>
     </form>
 
-    <div v-if="current" class="max-w-3xl space-y-3 rounded-2xl border bg-white p-6 text-sm">
+    <div v-if="current" class="surface max-w-3xl space-y-3 rounded-3xl p-6 text-sm">
       <p><strong>Current status:</strong> {{ current.approval_status }}</p>
       <p>{{ current.summary }}</p>
       <div v-if="auth.can('complaints:approve_resolution') && current.approval_status === 'SUBMITTED'" class="flex gap-2">

@@ -3,9 +3,9 @@
     <PageHeader title="Organizations" description="Platform administration. Organization users cannot see this page.">
       <AppButton @click="open = true">Create organization</AppButton>
     </PageHeader>
-    <div class="overflow-x-auto rounded-2xl border bg-white">
-      <table class="min-w-full text-sm">
-        <thead class="bg-slate-50 text-left text-xs uppercase text-slate-500">
+    <div class="surface overflow-x-auto rounded-2xl">
+      <table class="cms-table">
+        <thead>
           <tr>
             <th class="px-4 py-3">Name</th>
             <th class="px-4 py-3">Slug</th>
@@ -18,14 +18,14 @@
             <td class="px-4 py-3">{{ item.name }}</td>
             <td class="px-4 py-3">{{ item.slug }}</td>
             <td class="px-4 py-3">
-              <select class="rounded border px-2 py-1" :value="item.status" @change="setStatus(item, $event.target.value)">
+              <select class="field-input w-auto" :value="item.status" @change="setStatus(item, $event.target.value)">
                 <option value="ACTIVE">ACTIVE</option>
                 <option value="TRIAL">TRIAL</option>
                 <option value="SUSPENDED">SUSPENDED</option>
                 <option value="INACTIVE">INACTIVE</option>
               </select>
             </td>
-            <td class="px-4 py-3 text-slate-500">{{ item.email || '—' }}</td>
+            <td class="px-4 py-3 text-muted">{{ item.email || '—' }}</td>
           </tr>
         </tbody>
       </table>

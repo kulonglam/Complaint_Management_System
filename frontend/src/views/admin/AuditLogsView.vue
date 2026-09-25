@@ -13,23 +13,26 @@
       <input v-model="to" class="field-input" type="date" />
     </div>
     <div class="surface overflow-x-auto rounded-2xl">
-      <table class="min-w-full text-sm">
-        <thead class="bg-slate-50 text-left text-xs uppercase text-slate-500">
+      <table class="cms-table">
+        <thead>
           <tr>
-            <th class="px-4 py-3">When</th>
-            <th class="px-4 py-3">Action</th>
-            <th class="px-4 py-3">Entity</th>
-            <th class="px-4 py-3">User</th>
-            <th class="px-4 py-3">Details</th>
+            <th>When</th>
+            <th>Action</th>
+            <th>Entity</th>
+            <th>User</th>
+            <th>Details</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="item in filtered" :key="item.id" class="border-t">
-            <td class="px-4 py-3">{{ formatDate(item.created_at) }}</td>
-            <td class="px-4 py-3">{{ item.action }}</td>
-            <td class="px-4 py-3">{{ item.entity_type }}</td>
-            <td class="px-4 py-3">{{ displayName(item.actor) }}</td>
-            <td class="px-4 py-3 text-xs text-slate-500">{{ JSON.stringify(item.new_values || item.metadata || {}) }}</td>
+          <tr v-for="item in filtered" :key="item.id">
+            <td>{{ formatDate(item.created_at) }}</td>
+            <td>{{ humanize(item.action) }}</td>
+            <td>{{ humanize(item.entity_type) }}</td>
+            <td>{{ displayName(item.actor) }}</td>
+            <td class="text-xs text-muted">{{ formatRecordSummary(item.new_values || item.metadata) }}</td>
+          </tr>
+          <tr v-if="!filtered.length">
+            <td colspan="5" class="py-8 text-center text-muted">No audit events match these filters.</td>
           </tr>
         </tbody>
       </table>
@@ -44,8 +47,12 @@ import PageHeader from '@/components/common/PageHeader.vue';
 import AppButton from '@/components/common/AppButton.vue';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/composables/useAuth';
-import { displayName, downloadText, formatDate, getErrorMessage, toCsv } from '@/lib/utils';
+import { displayName, downloadText, formatDate, formatRecordSummary, getErrorMessage, toCsv } from '@/lib/utils';
 import { useToast } from '@/composables/useToast';
+
+function humanize(value) {
+  return String(value || '').replace(/[_-]+/g, ' ');
+}
 
 const auth = useAuth();
 const toast = useToast();

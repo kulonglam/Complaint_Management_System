@@ -6,8 +6,8 @@
       <div class="mt-6 grid gap-4">
         <FormField v-model="email" label="Email" type="email" required />
       </div>
-      <p v-if="message" class="mt-3 text-sm text-emerald-700">{{ message }}</p>
-      <p v-if="error" class="mt-3 text-sm text-red-600">{{ error }}</p>
+      <p v-if="message" class="mt-3 text-sm text-[var(--ok)]">{{ message }}</p>
+      <p v-if="error" class="mt-3 text-sm text-[var(--danger)]">{{ error }}</p>
       <AppButton class="mt-6 w-full" type="submit" :loading="loading">Send reset link</AppButton>
     </form>
   </div>

@@ -36,12 +36,12 @@
       <template #card="{ row }">
         <div class="flex items-start justify-between gap-2">
           <div>
-            <p class="text-xs text-slate-500">{{ row.reference_number }}</p>
+            <p class="text-xs text-muted">{{ row.reference_number }}</p>
             <h3 class="font-semibold">{{ row.title }}</h3>
           </div>
           <StatusBadge :value="row.status" />
         </div>
-        <p class="mt-2 text-sm text-slate-500">{{ row.department?.name || 'Unassigned' }} · {{ formatDate(row.created_at, false) }}</p>
+        <p class="mt-2 text-sm text-muted">{{ row.department?.name || 'Unassigned' }} · {{ formatDate(row.created_at, false) }}</p>
       </template>
       <template #pagination>
         <AppButton variant="secondary" :disabled="page === 1" @click="page -= 1">Previous</AppButton>

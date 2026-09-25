@@ -2,6 +2,17 @@ export function classNames(...values) {
   return values.filter(Boolean).join(' ');
 }
 
+export function formatRecordSummary(value, fallback = '—') {
+  if (value == null || value === '') return fallback;
+  if (typeof value !== 'object') return String(value);
+  const entries = Object.entries(value).filter(([, item]) => item != null && item !== '' && typeof item !== 'object');
+  if (entries.length) {
+    return entries.slice(0, 4).map(([key, item]) => `${key.replace(/_/g, ' ')}: ${item}`).join(' · ');
+  }
+  const keys = Object.keys(value);
+  return keys.length ? keys.slice(0, 4).map((key) => key.replace(/_/g, ' ')).join(', ') : fallback;
+}
+
 export function formatDate(value, withTime = true) {
   if (!value) return '—';
   const date = new Date(value);

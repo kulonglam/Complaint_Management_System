@@ -1,9 +1,9 @@
 <template>
   <section class="space-y-6">
     <PageHeader title="SLA policies" description="Response and resolution hours by priority. Due dates are calculated from these values." />
-    <div class="overflow-x-auto rounded-2xl border bg-white">
-      <table class="min-w-full text-sm">
-        <thead class="bg-slate-50 text-left text-xs uppercase text-slate-500">
+    <div class="surface overflow-x-auto rounded-2xl">
+      <table class="cms-table">
+        <thead>
           <tr>
             <th class="px-4 py-3">Priority</th>
             <th class="px-4 py-3">Response hours</th>
@@ -16,10 +16,10 @@
         <tbody>
           <tr v-for="item in items || []" :key="item.id" class="border-t">
             <td class="px-4 py-3"><PriorityBadge :value="item.priority" /></td>
-            <td class="px-4 py-3"><input v-model.number="item.response_hours" class="w-20 rounded border px-2 py-1" :disabled="!auth.can('sla:update')" /></td>
-            <td class="px-4 py-3"><input v-model.number="item.resolution_hours" class="w-20 rounded border px-2 py-1" :disabled="!auth.can('sla:update')" /></td>
-            <td class="px-4 py-3"><input v-model.number="item.escalation_hours" class="w-20 rounded border px-2 py-1" :disabled="!auth.can('sla:update')" /></td>
-            <td class="px-4 py-3"><input v-model.number="item.reminder_hours" class="w-20 rounded border px-2 py-1" :disabled="!auth.can('sla:update')" /></td>
+            <td class="px-4 py-3"><input v-model.number="item.response_hours" class="field-input w-20" :disabled="!auth.can('sla:update')" /></td>
+            <td class="px-4 py-3"><input v-model.number="item.resolution_hours" class="field-input w-20" :disabled="!auth.can('sla:update')" /></td>
+            <td class="px-4 py-3"><input v-model.number="item.escalation_hours" class="field-input w-20" :disabled="!auth.can('sla:update')" /></td>
+            <td class="px-4 py-3"><input v-model.number="item.reminder_hours" class="field-input w-20" :disabled="!auth.can('sla:update')" /></td>
             <td v-if="auth.can('sla:update')" class="px-4 py-3">
               <AppButton variant="secondary" @click="save(item)">Save</AppButton>
             </td>

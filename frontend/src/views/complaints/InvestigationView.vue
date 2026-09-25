@@ -1,7 +1,7 @@
 <template>
   <section class="space-y-6">
     <PageHeader title="Investigation" description="Internal workspace. This content is never shown on the public tracking page." />
-    <form class="max-w-3xl space-y-4 rounded-2xl border border-slate-200 bg-white p-6" @submit.prevent="save">
+    <form class="surface max-w-3xl space-y-4 rounded-3xl p-6" @submit.prevent="save">
       <FormField v-model="summary" label="Summary" type="textarea" />
       <FormField v-model="findings" label="Findings" type="textarea" />
       <FormField v-model="recommendations" label="Recommendations" type="textarea" />
@@ -9,9 +9,9 @@
       <AppButton type="submit" :loading="loading">Save investigation</AppButton>
     </form>
 
-    <div class="max-w-3xl space-y-3 rounded-2xl border bg-white p-6">
+    <div class="surface max-w-3xl space-y-3 rounded-3xl p-6">
       <div class="flex items-center justify-between">
-        <h2 class="font-semibold">Tasks</h2>
+        <h2 class="font-display text-xl">Tasks</h2>
       </div>
       <form class="grid gap-3 md:grid-cols-3" @submit.prevent="addTask">
         <FormField v-model="taskTitle" label="Task" required />
@@ -19,9 +19,9 @@
         <AppButton type="submit" :disabled="!investigationId">Add task</AppButton>
       </form>
       <ul class="space-y-2 text-sm">
-        <li v-for="task in tasks" :key="task.id" class="flex items-center justify-between rounded-lg border px-3 py-2">
+        <li v-for="task in tasks" :key="task.id" class="flex items-center justify-between rounded-xl border border-[var(--line)] px-3 py-2">
           <span>{{ task.title }} · {{ task.status }}</span>
-          <select class="rounded border px-2 py-1" :value="task.status" @change="updateTask(task, $event.target.value)">
+          <select class="field-input w-auto" :value="task.status" @change="updateTask(task, $event.target.value)">
             <option value="OPEN">Open</option>
             <option value="IN_PROGRESS">In progress</option>
             <option value="DONE">Done</option>

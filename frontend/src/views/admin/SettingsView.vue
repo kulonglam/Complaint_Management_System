@@ -4,9 +4,9 @@
     <form class="surface max-w-xl space-y-4 rounded-3xl p-6" @submit.prevent="save">
       <div v-if="logoUrl" class="flex items-center gap-3">
         <img :src="logoUrl" alt="Organization logo" class="h-14 w-14 rounded-lg object-contain border" />
-        <p class="text-sm text-slate-500">Current logo</p>
+        <p class="text-sm text-muted">Current logo</p>
       </div>
-      <label class="grid gap-1.5 text-sm font-medium text-slate-700">
+      <label class="grid gap-1.5 text-sm font-medium">
         Logo
         <input class="text-sm font-normal" type="file" accept="image/png,image/jpeg,image/webp" @change="onLogo" />
       </label>
@@ -35,7 +35,7 @@
 
     <form class="surface max-w-xl space-y-4 rounded-3xl p-6" @submit.prevent="eraseSubject">
       <h2 class="font-semibold">Subject erasure</h2>
-      <p class="text-sm text-slate-500">Redact name, email, and phone on complaints that match this complainant email. The complaint record stays for operations.</p>
+      <p class="text-sm text-muted">Redact name, email, and phone on complaints that match this complainant email. The complaint record stays for operations.</p>
       <FormField v-model="erasureEmail" label="Complainant email" type="email" />
       <AppButton type="submit" variant="danger" :disabled="!auth.can('settings:update')" :loading="erasing">Redact personal data</AppButton>
     </form>

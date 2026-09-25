@@ -32,7 +32,7 @@
       </template>
       <template #card="{ row }">
         <p class="font-semibold">{{ displayName(row) }}</p>
-        <p class="text-sm text-slate-500">{{ row.email }} · {{ row.user_roles?.[0]?.role?.name || 'No role' }}</p>
+        <p class="text-sm text-muted">{{ row.email }} · {{ row.user_roles?.[0]?.role?.name || 'No role' }}</p>
       </template>
     </DataTable>
     <Modal :open="open" title="Invite user" @close="open = false">
@@ -41,7 +41,7 @@
         <FormField v-model="form.first_name" label="First name" required />
         <FormField v-model="form.last_name" label="Last name" required />
         <FormField v-model="form.role_key" label="Role" type="select" :options="roleOptions" required />
-        <p class="text-xs text-slate-500">The invited user joins your organization automatically.</p>
+        <p class="text-xs text-muted">The invited user joins your organization automatically.</p>
         <AppButton type="submit" :loading="saving">Send invite</AppButton>
       </form>
     </Modal>

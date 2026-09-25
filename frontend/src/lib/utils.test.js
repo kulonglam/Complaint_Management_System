@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { can } from '@/services/auth.service';
-import { displayName, getErrorMessage, isValidEmail, isValidPhone, remainingTime, toCsv } from './utils.js';
+import { displayName, formatRecordSummary, getErrorMessage, isValidEmail, isValidPhone, remainingTime, toCsv } from './utils.js';
 
 describe('displayName', () => {
   it('joins first and last name', () => {
@@ -25,6 +25,16 @@ describe('validation', () => {
     expect(isValidPhone('')).toBe(true);
     expect(isValidPhone('abc')).toBe(false);
     expect(isValidPhone('+254711223344')).toBe(true);
+  });
+});
+
+describe('formatRecordSummary', () => {
+  it('turns object fields into a short sentence', () => {
+    expect(formatRecordSummary({ status: 'OPEN', reference_number: 'C-1' })).toBe('status: OPEN · reference number: C-1');
+  });
+
+  it('falls back for empty values', () => {
+    expect(formatRecordSummary({})).toBe('—');
   });
 });
 

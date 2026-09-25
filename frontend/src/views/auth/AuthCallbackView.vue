@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto max-w-md px-4 py-16 text-sm text-slate-600">Completing sign in…</div>
+  <div class="mx-auto max-w-md px-4 py-16 text-sm text-muted">Completing sign in…</div>
 </template>
 
 <script setup>

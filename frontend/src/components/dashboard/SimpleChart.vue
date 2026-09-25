@@ -34,24 +34,42 @@ const props = defineProps({
   label: { type: String, default: 'Count' },
 });
 
-const chartData = computed(() => ({
-  labels: props.labels,
-  datasets: [
-    {
-      label: props.label,
-      data: props.values,
-      backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#0c6b5c',
-      borderColor: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#0c6b5c',
-      borderRadius: 6,
-      tension: 0.3,
-    },
-  ],
-}));
+function theme() {
+  const styles = getComputedStyle(document.documentElement);
+  return {
+    accent: styles.getPropertyValue('--accent').trim() || '#0c6b5c',
+    muted: styles.getPropertyValue('--muted').trim() || '#6a645a',
+    line: styles.getPropertyValue('--line').trim() || '#e4d8c8',
+  };
+}
 
-const options = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: { legend: { display: false } },
-  scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
-};
+const chartData = computed(() => {
+  const colors = theme();
+  return {
+    labels: props.labels,
+    datasets: [
+      {
+        label: props.label,
+        data: props.values,
+        backgroundColor: colors.accent,
+        borderColor: colors.accent,
+        borderRadius: 6,
+        tension: 0.3,
+      },
+    ],
+  };
+});
+
+const options = computed(() => {
+  const colors = theme();
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color: colors.muted }, grid: { color: colors.line } },
+      y: { beginAtZero: true, ticks: { precision: 0, color: colors.muted }, grid: { color: colors.line } },
+    },
+  };
+});
 </script>

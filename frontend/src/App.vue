@@ -1,4 +1,5 @@
 <template>
+  <a class="skip-link" href="#main">Skip to content</a>
   <div class="pointer-events-none fixed right-4 top-4 z-[80] space-y-2">
     <div
       v-for="item in toast.toasts"

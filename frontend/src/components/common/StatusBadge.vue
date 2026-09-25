@@ -16,21 +16,21 @@ const props = defineProps({
 });
 
 const map = {
-  SUBMITTED: { icon: CircleDot, class: 'bg-[#efe8dc] text-ink' },
+  SUBMITTED: { icon: CircleDot, class: 'bg-[color-mix(in_srgb,var(--muted)_16%,var(--surface))] text-ink' },
   RECEIVED: { icon: CircleDot, class: 'bg-[var(--accent-soft)] text-[var(--accent)]' },
-  UNDER_REVIEW: { icon: CircleDot, class: 'bg-[#e8e4f4] text-[#4338ca]' },
+  UNDER_REVIEW: { icon: CircleDot, class: 'bg-[color-mix(in_srgb,#4338ca_16%,var(--surface))] text-[#6d63d6]' },
   ASSIGNED: { icon: CircleDot, class: 'bg-[var(--accent-soft)] text-[var(--accent)]' },
-  UNDER_INVESTIGATION: { icon: AlertTriangle, class: 'bg-[#f8ead3] text-[var(--warn)]' },
-  PENDING_ACTION: { icon: AlertTriangle, class: 'bg-[#f6e0c8] text-[#9a4b12]' },
-  RESOLVED: { icon: CheckCircle2, class: 'bg-[#e3efe4] text-[var(--ok)]' },
-  CLOSED: { icon: CheckCircle2, class: 'bg-[#d7e8d9] text-[#2f5436]' },
-  REJECTED: { icon: XCircle, class: 'bg-[#f8e4e1] text-[var(--danger)]' },
-  ESCALATED: { icon: AlertTriangle, class: 'bg-[#f8e4e1] text-[var(--danger)]' },
-  ON_HOLD: { icon: PauseCircle, class: 'bg-[#efe8dc] text-muted' },
-  REOPENED: { icon: RotateCcw, class: 'bg-[#efe4f4] text-[#6b21a8]' },
-  DUPLICATE: { icon: CircleDot, class: 'bg-[#efe8dc] text-muted' },
+  UNDER_INVESTIGATION: { icon: AlertTriangle, class: 'bg-[color-mix(in_srgb,var(--warn)_16%,var(--surface))] text-[var(--warn)]' },
+  PENDING_ACTION: { icon: AlertTriangle, class: 'bg-[color-mix(in_srgb,#9a4b12_16%,var(--surface))] text-[#c46a28]' },
+  RESOLVED: { icon: CheckCircle2, class: 'bg-[color-mix(in_srgb,var(--ok)_16%,var(--surface))] text-[var(--ok)]' },
+  CLOSED: { icon: CheckCircle2, class: 'bg-[color-mix(in_srgb,var(--ok)_22%,var(--surface))] text-[var(--ok)]' },
+  REJECTED: { icon: XCircle, class: 'bg-[color-mix(in_srgb,var(--danger)_16%,var(--surface))] text-[var(--danger)]' },
+  ESCALATED: { icon: AlertTriangle, class: 'bg-[color-mix(in_srgb,var(--danger)_16%,var(--surface))] text-[var(--danger)]' },
+  ON_HOLD: { icon: PauseCircle, class: 'bg-[color-mix(in_srgb,var(--muted)_16%,var(--surface))] text-muted' },
+  REOPENED: { icon: RotateCcw, class: 'bg-[color-mix(in_srgb,#6b21a8_16%,var(--surface))] text-[#a855f7]' },
+  DUPLICATE: { icon: CircleDot, class: 'bg-[color-mix(in_srgb,var(--muted)_16%,var(--surface))] text-muted' },
 };
 
 const icon = computed(() => map[props.value]?.icon || CircleDot);
-const toneClass = computed(() => map[props.value]?.class || 'bg-[#efe8dc] text-ink');
+const toneClass = computed(() => map[props.value]?.class || 'bg-[color-mix(in_srgb,var(--muted)_16%,var(--surface))] text-ink');
 </script>

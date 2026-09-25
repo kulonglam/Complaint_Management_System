@@ -1,9 +1,9 @@
 <template>
   <section class="space-y-6">
     <PageHeader :title="displayName(user)" :description="user?.email" />
-    <form v-if="user" class="max-w-xl space-y-4 rounded-2xl border border-slate-200 bg-white p-6 text-sm" @submit.prevent="save">
-      <p>Email: {{ user.email }}</p>
-      <p>Last login: {{ formatDate(user.last_login_at) }}</p>
+    <form v-if="user" class="surface max-w-xl space-y-4 rounded-3xl p-6 text-sm" @submit.prevent="save">
+      <p class="text-muted">Email: {{ user.email }}</p>
+      <p class="text-muted">Last login: {{ formatDate(user.last_login_at) }}</p>
       <FormField v-model="jobTitle" label="Job title" />
       <FormField v-model="departmentId" label="Department" type="select" :options="departmentOptions" />
       <FormField v-model="status" label="Status" type="select" :options="statusOptions" />

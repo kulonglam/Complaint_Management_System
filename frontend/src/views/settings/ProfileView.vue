@@ -6,19 +6,33 @@
       <FormField v-model="lastName" label="Last name" />
       <FormField v-model="phone" label="Phone" :error="phoneError" />
       <FormField v-model="jobTitle" label="Job title" />
-      <p class="text-sm text-slate-500">Email and organization membership cannot be changed here.</p>
+      <p class="text-sm text-muted">Email and organization membership cannot be changed here.</p>
       <AppButton type="submit">Save profile</AppButton>
     </form>
 
     <article class="surface max-w-xl space-y-3 rounded-3xl p-6">
+      <h2 class="font-display text-xl">Appearance</h2>
+      <p class="text-sm text-muted">These preferences stay on this device.</p>
+      <div class="flex flex-wrap gap-2">
+        <AppButton v-for="option in ['system', 'light', 'dark']" :key="option" :variant="theme.state.appearance === option ? 'primary' : 'secondary'" type="button" @click="theme.setAppearance(option)">
+          {{ option[0].toUpperCase() + option.slice(1) }}
+        </AppButton>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <AppButton :variant="theme.state.density === 'comfortable' ? 'primary' : 'secondary'" type="button" @click="theme.setDensity('comfortable')">Comfortable</AppButton>
+        <AppButton :variant="theme.state.density === 'compact' ? 'primary' : 'secondary'" type="button" @click="theme.setDensity('compact')">Compact</AppButton>
+      </div>
+    </article>
+
+    <article class="surface max-w-xl space-y-3 rounded-3xl p-6">
       <h2 class="font-semibold">Two-factor authentication</h2>
-      <p v-if="mustEnroll" class="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+      <p v-if="mustEnroll" class="rounded-xl bg-[color-mix(in_srgb,var(--warn)_14%,var(--surface))] p-3 text-sm">
         Administrator accounts must enable an authenticator app before using the rest of the system.
       </p>
-      <p v-else-if="mustVerify" class="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+      <p v-else-if="mustVerify" class="rounded-xl bg-[color-mix(in_srgb,var(--warn)_14%,var(--surface))] p-3 text-sm">
         Enter a 6-digit code to complete sign-in.
       </p>
-      <p class="text-sm text-slate-500">Use an authenticator app. This is enforced at sign-in after enrollment.</p>
+      <p class="text-sm text-muted">Use an authenticator app. This is enforced at sign-in after enrollment.</p>
       <p class="text-sm">Status: {{ mfa.enabled ? 'Enabled' : 'Not enabled' }}</p>
       <div v-if="mfa.qr || mustVerify" class="space-y-3">
         <img v-if="mfa.qr" :src="mfa.qr" alt="Authenticator QR code" class="h-40 w-40 border" />
@@ -44,8 +58,10 @@ import { useAuth } from '@/composables/useAuth';
 import { useToast } from '@/composables/useToast';
 import { adminMfaRequired } from '@/lib/mfa';
 import { getErrorMessage, isValidPhone } from '@/lib/utils';
+import { useTheme } from '@/composables/useTheme';
 
 const auth = useAuth();
+const theme = useTheme();
 const toast = useToast();
 const route = useRoute();
 const router = useRouter();

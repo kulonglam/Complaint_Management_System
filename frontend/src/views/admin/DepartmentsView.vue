@@ -3,9 +3,9 @@
     <PageHeader title="Departments">
       <AppButton v-if="auth.can('departments:create')" @click="openCreate()">Add department</AppButton>
     </PageHeader>
-    <div class="overflow-x-auto rounded-2xl border bg-white">
-      <table class="min-w-full text-sm">
-        <thead class="bg-slate-50 text-left text-xs uppercase text-slate-500">
+    <div class="surface overflow-x-auto rounded-2xl">
+      <table class="cms-table">
+        <thead>
           <tr><th class="px-4 py-3">Name</th><th class="px-4 py-3">Code</th><th class="px-4 py-3">Status</th><th class="px-4 py-3" /></tr>
         </thead>
         <tbody>

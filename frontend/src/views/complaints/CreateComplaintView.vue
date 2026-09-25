@@ -1,13 +1,13 @@
 <template>
   <section class="space-y-6">
     <PageHeader title="Create complaint" description="Internal intake for staff. Organization is taken from your session, not the form." />
-    <form class="max-w-2xl space-y-4 rounded-2xl border border-slate-200 bg-white p-6" @submit.prevent="onSubmit">
+    <form class="surface max-w-2xl space-y-4 rounded-3xl p-6" @submit.prevent="onSubmit">
       <FormField v-model="title" label="Title" required />
       <FormField v-model="description" label="Description" type="textarea" required />
       <FormField v-model="categoryId" label="Category" type="select" :options="categoryOptions" />
       <FormField v-if="subcategoryOptions.length" v-model="subcategoryId" label="Subcategory" type="select" :options="subcategoryOptions" />
       <FormField v-model="priority" label="Priority" type="select" :options="PRIORITY_OPTIONS" />
-      <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
+      <p v-if="error" class="text-sm text-[var(--danger)]">{{ error }}</p>
       <AppButton type="submit" :loading="loading">Create</AppButton>
     </form>
   </section>

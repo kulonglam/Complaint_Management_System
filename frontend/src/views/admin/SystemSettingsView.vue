@@ -1,7 +1,7 @@
 <template>
   <section class="space-y-6">
     <PageHeader title="System settings" description="Platform-wide configuration. Organization users cannot see this page." />
-    <form class="max-w-xl space-y-4 rounded-2xl border bg-white p-6" @submit.prevent="save">
+    <form class="surface max-w-xl space-y-4 rounded-3xl p-6" @submit.prevent="save">
       <label class="flex items-center gap-2 text-sm">
         <input v-model="maintenance" type="checkbox" /> Maintenance mode
       </label>

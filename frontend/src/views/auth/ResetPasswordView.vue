@@ -5,7 +5,7 @@
       <div class="mt-6 grid gap-4">
         <FormField v-model="password" label="New password" type="password" required />
       </div>
-      <p v-if="error" class="mt-3 text-sm text-red-600">{{ error }}</p>
+      <p v-if="error" class="mt-3 text-sm text-[var(--danger)]">{{ error }}</p>
       <AppButton class="mt-6 w-full" type="submit" :loading="loading">Update password</AppButton>
     </form>
   </div>

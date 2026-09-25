@@ -12,7 +12,7 @@
         </li>
       </ol>
 
-      <div class="absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
+      <div class="hidden" aria-hidden="true">
         <label>Company website
           <input v-model="honeypot" tabindex="-1" autocomplete="off" />
         </label>
@@ -35,7 +35,7 @@
           Submit anonymously
         </label>
         <p v-if="!allowAnonymous" class="text-sm text-muted">This organization does not accept anonymous complaints.</p>
-        <p v-if="form.is_anonymous" class="rounded-xl bg-[#f8ead3] p-3 text-sm text-[var(--warn)]">
+        <p v-if="form.is_anonymous" class="rounded-xl bg-[color-mix(in_srgb,var(--warn)_14%,var(--surface))] p-3 text-sm text-[var(--warn)]">
           Anonymous complaints may limit the organization's ability to follow up with you.
         </p>
         <template v-else>
@@ -46,7 +46,7 @@
       </div>
 
       <div v-else-if="step === 3" class="grid gap-4">
-        <label class="text-sm font-medium text-slate-700">Supporting documents
+        <label class="text-sm font-medium">Supporting documents
           <input class="mt-1 block w-full text-sm" type="file" multiple @change="onFiles" />
         </label>
         <p class="text-xs text-muted">PDF, Word, Excel, JPG, or PNG. 10MB maximum per file.</p>

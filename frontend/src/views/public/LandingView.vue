@@ -26,7 +26,7 @@
               <p class="text-xs text-muted">CMP-2026-000184</p>
               <h2 class="font-display text-2xl">Delayed clinic appointment</h2>
             </div>
-            <span class="rounded-full bg-[#f8ead3] px-2.5 py-1 text-xs font-semibold text-[var(--warn)]">Under investigation</span>
+            <span class="rounded-full bg-[color-mix(in_srgb,var(--warn)_16%,var(--surface))] px-2.5 py-1 text-xs font-semibold text-[var(--warn)]">Under investigation</span>
           </div>
           <dl class="mt-6 grid grid-cols-2 gap-4 text-sm">
             <div><dt class="text-muted">Due</dt><dd class="font-medium">2 days remaining</dd></div>

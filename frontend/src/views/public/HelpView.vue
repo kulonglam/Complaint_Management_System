@@ -19,6 +19,15 @@
         <h2 class="font-display text-xl">Staff access</h2>
         <p class="mt-2 text-sm leading-6 text-muted">Officers sign in from the Sign in page. Access is limited by organization membership and permissions.</p>
       </article>
+      <article class="surface rounded-2xl p-5">
+        <h2 class="font-display text-xl">Staff shortcuts</h2>
+        <ul class="mt-3 space-y-2 text-sm text-muted">
+          <li><kbd class="chip">Ctrl</kbd> or <kbd class="chip">⌘</kbd> + <kbd class="chip">K</kbd> opens the command palette to jump to any page or search cases.</li>
+          <li>Use the header search to filter complaints by reference, title, category, or department.</li>
+          <li>Dark mode and compact density stay on this device. Change them from the header or your profile.</li>
+          <li>Skip to content is available with the Tab key for keyboard users.</li>
+        </ul>
+      </article>
     </div>
   </div>
 </template>

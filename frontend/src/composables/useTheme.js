@@ -1,10 +1,16 @@
-import { watch } from 'vue';
+import { reactive, watch } from 'vue';
 import { useAuth } from './useAuth';
 
 const DEFAULT = '#0c6b5c';
+const state = reactive({
+  appearance: localStorage.getItem('cms-appearance') || 'system',
+  density: localStorage.getItem('cms-density') || 'comfortable',
+});
+
+let started = false;
 
 function hexToRgb(hex) {
-  const value = hex.replace('#', '');
+  const value = String(hex || '').replace('#', '');
   if (![3, 6].includes(value.length) || !/^[0-9a-f]+$/i.test(value)) return null;
   const full = value.length === 3 ? value.split('').map((c) => c + c).join('') : value;
   return {
@@ -21,15 +27,44 @@ function applyAccent(hex) {
   root.style.setProperty('--accent', color);
   root.style.setProperty('--color-accent', color);
   root.style.setProperty('--accent-hover', `color-mix(in srgb, ${color} 82%, #000)`);
-  root.style.setProperty('--accent-soft', `color-mix(in srgb, ${color} 16%, #fffdf8)`);
+  const mixInto = root.classList.contains('dark') ? '#1e1a16' : '#fffdf8';
+  root.style.setProperty('--accent-soft', `color-mix(in srgb, ${color} 18%, ${mixInto})`);
+}
+
+function applyChrome() {
+  const root = document.documentElement;
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const dark = state.appearance === 'dark' || (state.appearance === 'system' && prefersDark);
+  root.classList.toggle('dark', dark);
+  root.classList.toggle('compact', state.density === 'compact');
+  localStorage.setItem('cms-appearance', state.appearance);
+  localStorage.setItem('cms-density', state.density);
+}
+
+function start() {
+  if (started) return;
+  started = true;
+  const auth = useAuth();
+  const refresh = () => {
+    applyChrome();
+    applyAccent(auth.state.organization?.primary_color || DEFAULT);
+  };
+  watch(() => [state.appearance, state.density, auth.state.organization?.primary_color], refresh, { immediate: true });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', refresh);
 }
 
 export function useTheme() {
-  const auth = useAuth();
-  watch(
-    () => auth.state.organization?.primary_color,
-    (color) => applyAccent(color || DEFAULT),
-    { immediate: true }
-  );
-  return { applyAccent };
+  start();
+  return {
+    state,
+    setAppearance(value) {
+      state.appearance = value;
+    },
+    toggleAppearance() {
+      state.appearance = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+    },
+    setDensity(value) {
+      state.density = value;
+    },
+  };
 }

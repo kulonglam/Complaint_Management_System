@@ -9,11 +9,21 @@
           <router-link to="/submit-complaint" class="text-muted hover:text-ink">Submit</router-link>
           <router-link to="/track-complaint" class="text-muted hover:text-ink">Track</router-link>
           <router-link to="/help" class="text-muted hover:text-ink">Help</router-link>
+          <button class="rounded-xl p-2 hover:bg-[var(--paper)]" type="button" :aria-label="isDark ? 'Switch to light appearance' : 'Switch to dark appearance'" @click="theme.toggleAppearance()">
+            <Sun v-if="isDark" class="h-4 w-4" />
+            <Moon v-else class="h-4 w-4" />
+          </button>
           <router-link to="/login" class="font-semibold text-[var(--accent)]">Sign in</router-link>
         </nav>
-        <button class="rounded-xl p-2 md:hidden" type="button" aria-label="Open menu" @click="open = !open">
-          <Menu class="h-5 w-5" />
-        </button>
+        <div class="flex items-center gap-1">
+          <button class="rounded-xl p-2 md:hidden" type="button" :aria-label="isDark ? 'Switch to light appearance' : 'Switch to dark appearance'" @click="theme.toggleAppearance()">
+            <Sun v-if="isDark" class="h-5 w-5" />
+            <Moon v-else class="h-5 w-5" />
+          </button>
+          <button class="rounded-xl p-2 md:hidden" type="button" aria-label="Open menu" @click="open = !open">
+            <Menu class="h-5 w-5" />
+          </button>
+        </div>
       </div>
       <div v-if="open" class="border-t border-[var(--line)] px-4 py-3 md:hidden">
         <nav class="grid gap-2 text-sm">
@@ -24,14 +34,19 @@
         </nav>
       </div>
     </header>
-    <router-view />
+    <main id="main">
+      <router-view />
+    </main>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { Menu } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
+import { Menu, Moon, Sun } from 'lucide-vue-next';
 import BrandMark from '@/components/common/BrandMark.vue';
+import { useTheme } from '@/composables/useTheme';
 
 const open = ref(false);
+const theme = useTheme();
+const isDark = computed(() => theme.state.appearance === 'dark' || (theme.state.appearance === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches));
 </script>

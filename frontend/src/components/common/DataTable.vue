@@ -37,7 +37,7 @@
       <article
         v-for="(row, index) in rows"
         :key="row.id || index"
-        class="rounded-xl border border-slate-200 p-4"
+        class="rounded-xl border border-[var(--line)] bg-[var(--paper)] p-4"
         @click="clickable && $emit('row-click', row)"
       >
         <slot name="card" :row="row">

@@ -51,17 +51,18 @@ security definer
 set search_path = public
 as $$
 declare
-  actor text := left(public.client_ip(), 120);
-  window_start timestamptz := date_trunc('minute', now());
+  v_actor text := left(public.client_ip(), 120);
+  v_window_start timestamptz := date_trunc('minute', now());
   hits integer;
 begin
   insert into public.rate_limits (bucket, actor, window_start, hit_count)
-  values (p_bucket, actor, window_start, 1)
+  values (p_bucket, v_actor, v_window_start, 1)
   on conflict (bucket, actor, window_start)
   do update set hit_count = public.rate_limits.hit_count + 1
-  returning hit_count into hits;
+  returning public.rate_limits.hit_count into hits;
 
-  delete from public.rate_limits where window_start < now() - p_window;
+  delete from public.rate_limits
+  where public.rate_limits.window_start < now() - p_window;
 
   if hits > p_limit then
     raise exception 'Too many attempts. Please wait a minute and try again.';

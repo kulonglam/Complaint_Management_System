@@ -58,8 +58,9 @@ create or replace function public.hash_tracking_code(p_code text)
 returns text
 language sql
 immutable
+set search_path = public, extensions
 as $$
-  select encode(digest(upper(trim(p_code)), 'sha256'), 'hex');
+  select encode(digest(convert_to(upper(trim(p_code)), 'UTF8'), 'sha256'::text), 'hex');
 $$;
 
 create or replace function public.generate_tracking_code()

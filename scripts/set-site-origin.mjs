@@ -45,20 +45,29 @@ const redirects = [
   'http://localhost:3000/login',
 ].join(',');
 
-const response = await fetch(`https://api.supabase.com/v1/projects/${ref}/config/auth`, {
-  method: 'PATCH',
-  headers: {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    site_url: origin,
-    uri_allow_list: redirects,
-  }),
-});
-const text = await response.text();
-if (!response.ok) {
-  console.error(`Auth update failed (${response.status}): ${text}`);
+try {
+  const response = await fetch(`https://api.supabase.com/v1/projects/${ref}/config/auth`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      site_url: origin,
+      uri_allow_list: redirects,
+    }),
+    signal: AbortSignal.timeout(20000),
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    console.error(`Auth update failed (${response.status}): ${text || 'No details from Supabase.'}`);
+    process.exit(1);
+  }
+} catch (error) {
+  const reason = error.name === 'TimeoutError'
+    ? 'The request to Supabase timed out.'
+    : (error.message || 'Network request failed.');
+  console.error(`Unable to update Auth URLs: ${reason}`);
   process.exit(1);
 }
 

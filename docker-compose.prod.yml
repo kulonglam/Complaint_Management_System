@@ -13,6 +13,8 @@ services:
       args:
         VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
         VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+        # Browser-side URL (published host port). Do not use http://backend:8000 —
+        # Vite inlines this into the SPA, and the user's browser cannot resolve Docker DNS.
         VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
     ports:
       - "3000:80"

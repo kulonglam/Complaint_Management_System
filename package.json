@@ -16,7 +16,7 @@
     "dev:backend": "node scripts/dev-backend.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.57.4",
+    "@supabase/supabase-js": "^2.117.0",
     "dotenv": "^17.2.2"
   }
 }

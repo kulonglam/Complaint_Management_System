@@ -64,7 +64,10 @@ try {
     process.exit(1);
   }
 } catch (error) {
-  const reason = error.name === 'TimeoutError'
+  const timedOut = error.name === 'TimeoutError'
+      || error.name === 'AbortError'
+      || error.cause?.name === 'TimeoutError';
+  const reason = timedOut
     ? 'The request to Supabase timed out.'
     : (error.message || 'Network request failed.');
   console.error(`Unable to update Auth URLs: ${reason}`);
